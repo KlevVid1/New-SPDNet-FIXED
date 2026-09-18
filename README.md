@@ -16,70 +16,19 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 
 The game is distributed through **GitHub Releases**:
 
-[![GitHub Releases](https://shatteredpixel.com/assets/images/badges/github.png)](https://github.com/Not-Name-Dev-Team/New-SPDNet/releases)
-
-## Web Dashboard
-
-Access the game web dashboard at:
-
-**http://jdsalingzx.top:10061**
-
-The dashboard provides:
-- Player statistics and leaderboards
-- Real-time player activity
-- Game records and achievements
-
-## Server Information
-
-- **Default Server Port**: 21687
-- **Communication Protocol**: Socket.IO
-- **Database**: SQLite for player data and game records
-
 ## Technical Stack
 
 ### Client (Android/Desktop)
 - **Language**: Java
-- **JSON Library**: fastjson1 (Android 6 compatibility)
+- **JSON Library**: fastjson1 (Android 6-16 compatibility)
 - **Network**: Socket.IO client
-
-### Server
-- **Framework**: Spring Boot
-- **Language**: Java
-- **JSON Library**: fastjson2
-- **Socket Server**: netty-socketio
-- **Frontend**: Vue.js
-
-## Project Structure
-
-```
-├── core/           # Core game logic (Shattered Pixel Dungeon)
-├── android/        # Android-specific code
-├── desktop/        # Desktop-specific code
-├── ios/            # iOS-specific code
-├── server/         # Multiplayer server (Spring Boot + Vue.js frontend)
-├── spdnet/         # New multiplayer classes
-└── spdnetbutcopy/  # Modified original game classes
-```
-
-## Development
-
-### Package Structure
-
-- **`me.catand.spdnet.*`**: New classes created from scratch for multiplayer functionality
-- **`me.catand.spdnetbutcopy.*`**: Classes that replace/modify original game classes
-
-### Building
-
-See the documentation in `/docs` for compilation guides:
-- [Compiling for Android](docs/getting-started-android.md)
-- [Compiling for desktop platforms](docs/getting-started-desktop.md)
-- [Compiling for iOS](docs/getting-started-ios.md)
+- 
 
 ## Credits
 
 - Original Pixel Dungeon by [Watabou](https://watabou.itch.io/)
 - Shattered Pixel Dungeon by [Evan Debenham](https://shatteredpixel.com/)
-- SPDNet multiplayer modifications by catand
+- Fixed New-SPDNet by [KlevVid](https://github.com/KlevVid1)
 
 ## License
 
