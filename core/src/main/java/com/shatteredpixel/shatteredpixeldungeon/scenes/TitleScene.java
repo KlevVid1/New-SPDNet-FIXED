@@ -42,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CLeaveDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.windows.NetWindow;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.windows.NetWndLanMultiplayer;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.windows.NetWndPlayerList;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
@@ -191,7 +192,10 @@ public class TitleScene extends PixelScene {
 //		add(btnSupport);
 
 		// 服务器连接按钮
-		btnConnection = new StyledButton(GREY_TR, "连接服务器") {
+		boolean isChinese = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
+		String serverBtnText = Messages.lang() == Languages.RUSSIAN ? "Сервер" :
+				(isChinese ? "连接服务器" : "Server");
+		btnConnection = new StyledButton(GREY_TR, serverBtnText) {
 			@Override
 			protected void onClick() {
 				NetWindow.showServerInfo();
@@ -202,15 +206,13 @@ public class TitleScene extends PixelScene {
 		btnConnection.icon().scale.set(PixelScene.align(0.8f));
 		add(btnConnection);
 
-		// 玩家列表按钮
-		btnPlayers = new StyledButton(GREY_TR, "在线玩家") {
+		// Локальная сеть / 局域网联机 / Local Co-op
+		String lanBtnText = Messages.lang() == Languages.RUSSIAN ? "Локальная сеть" :
+				(isChinese ? "局域网联机" : "Local Co-op");
+		btnPlayers = new StyledButton(GREY_TR, lanBtnText) {
 			@Override
 			protected void onClick() {
-				if (!Net.isConnected()) {
-					NetWindow.showServerInfo();
-					return;
-				}
-				Game.runOnRenderThread(() -> ShatteredPixelDungeon.scene().add(new NetWndPlayerList()));
+				Game.runOnRenderThread(() -> ShatteredPixelDungeon.scene().add(new NetWndLanMultiplayer()));
 			}
 		};
 
@@ -221,12 +223,11 @@ public class TitleScene extends PixelScene {
 		btnRankings = new StyledButton(GREY_TR,Messages.get(this, "rankings")){
 			@Override
 			protected void onClick() {
-				// SPDNet: 检查是否已登录云端，未登录则弹出登录窗口
-				if (!Net.isConnected()) {
-					NetWindow.showServerInfo();
-					return;
+				if (Net.isConnected()) {
+					ShatteredPixelDungeon.switchNoFade( NetRankingsScene.class );
+				} else {
+					ShatteredPixelDungeon.switchNoFade( RankingsScene.class );
 				}
-				ShatteredPixelDungeon.switchNoFade( NetRankingsScene.class );
 			}
 		};
 		btnRankings.icon(Icons.get(Icons.RANKINGS));
@@ -236,11 +237,6 @@ public class TitleScene extends PixelScene {
 		btnJournal = new StyledButton(GREY_TR, Messages.get(this, "journal")){
 			@Override
 			protected void onClick() {
-				// SPDNet: 检查是否已登录云端，未登录则弹出登录窗口
-				if (!Net.isConnected()) {
-					NetWindow.showServerInfo();
-					return;
-				}
 				ShatteredPixelDungeon.switchNoFade( JournalScene.class );
 			}
 		};

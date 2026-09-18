@@ -37,7 +37,18 @@ public enum Events {
 	// SPDNet: 地牢留言(Ping)系统 - 留言创建成功后的聊天通报（渲染为聊天窗口通报而非弹窗）
 	NOTE_NOTIFY("noteNotify"),
 	// SPDNet: Journal 相关事件（原为裸字符串，现纳入枚举统一管理）
-	JOURNALS("journals");
+	JOURNALS("journals"),
+	// SPDNet Co-op: Синхронизация предметов на полу
+	ITEM_DROP("itemDrop"),
+	ITEM_PICKUP("itemPickUp"),
+	// SPDNet Co-op: Синхронизация мобов и боссов
+	MOB_DAMAGE("mobDamage"),
+	MOB_DIE("mobDie"),
+	MOB_MOVE("mobMove"),
+	MOB_ATTACK("mobAttack"),
+	MOB_SPAWN("mobSpawn"),
+	TERRAIN_CHANGE("terrainChange"),
+	CHEST_OPEN("chestOpen");
 
 	private final String name;
 

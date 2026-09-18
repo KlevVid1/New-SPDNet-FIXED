@@ -19,6 +19,8 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.ui.Component;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.DeviceCompat;
 
 import java.text.SimpleDateFormat;
@@ -128,7 +130,12 @@ public class NetWndChat extends NetWindow {
 			content = list.content();
 			content.clear();
 
-			sendBtn = new BlueButton("发送") {
+			boolean isRu = Messages.lang() == Languages.RUSSIAN;
+			boolean isZh = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
+			String sendLabel = isRu ? "Отправить" : (isZh ? "发送" : "Send");
+			String pingLabel = isRu ? "Заметка" : (isZh ? "留言" : "Note");
+
+			sendBtn = new BlueButton(sendLabel) {
 				@Override
 				protected void onClick() {
 					String msg = textInput.getText();
@@ -145,7 +152,7 @@ public class NetWndChat extends NetWindow {
 
 			add(sendBtn);
 
-			pingBtn = new BlueButton("留言") {
+			pingBtn = new BlueButton(pingLabel) {
 				@Override
 				protected void onClick() {
 					NetWndChat.this.hide();

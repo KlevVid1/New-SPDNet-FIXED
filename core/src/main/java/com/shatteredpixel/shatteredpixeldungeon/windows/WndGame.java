@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.HeroSelectScene;
@@ -97,6 +98,19 @@ public class WndGame extends Window {
 			} );
 			curBtn.icon(Icons.get(Icons.RANKINGS));
 		}
+
+		// Local Co-op
+		boolean isRu = Messages.lang() == Languages.RUSSIAN;
+		boolean isZh = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
+		String lanText = isRu ? "Локальная сеть" : (isZh ? "局域网联机" : "Local Co-op");
+		addButton(curBtn = new RedButton(lanText) {
+			@Override
+			protected void onClick() {
+				hide();
+				GameScene.show(new com.shatteredpixel.shatteredpixeldungeon.spdnet.windows.NetWndLanMultiplayer());
+			}
+		});
+		curBtn.icon(com.shatteredpixel.shatteredpixeldungeon.spdnet.ui.NetIcons.get(com.shatteredpixel.shatteredpixeldungeon.spdnet.ui.NetIcons.PLAYERS));
 
 		// Main menu
 		addButton(curBtn = new RedButton(Messages.get(this, "menu")) {

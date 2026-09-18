@@ -243,7 +243,14 @@ public class NetWndPlayerInfo extends WndTabbed {
 
 			pos += GAP;
 
-			RedButton backpackButton = new RedButton("查看" + hero.name + "的背包") {
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+			String bagBtnLabel = isRu ? ("Рюкзак: " + hero.name) :
+					(isZh ? ("查看" + hero.name + "的背包") :
+							("View " + hero.name + "'s Bag"));
+			RedButton backpackButton = new RedButton(bagBtnLabel) {
 				@Override
 				protected void onClick() {
 					super.onClick();
@@ -262,18 +269,24 @@ public class NetWndPlayerInfo extends WndTabbed {
 
 			// SPDNet: 留言"详情"只读查看时(noGift)不显示赠送按钮——快照玩家非在线实体，禁止赠送
 			if (ShatteredPixelDungeon.scene() instanceof GameScene && !noGift) {
-				RedButton giveItemButton = new RedButton("给" + hero.name + "赠送物品") {
+				String giftBtnLabel = isRu ? ("Подарить предмет (" + hero.name + ")") :
+						(isZh ? ("给" + hero.name + "赠送物品") :
+								("Give item to " + hero.name));
+				RedButton giveItemButton = new RedButton(giftBtnLabel) {
 					@Override
 					protected void onClick() {
 						super.onClick();
 						if (NetInProgress.isDailyChallenge()) {
-							NLog.h("每日挑战模式下无法赠送物品");
+							String noGiftMsg = isRu ? "В ежедневном испытании передача предметов запрещена" :
+									(isZh ? "每日挑战模式下无法赠送物品" : "Cannot give items in Daily Challenge mode");
+							NLog.h(noGiftMsg);
 							return;
 						}
 						GameScene.selectItem(new WndBag.ItemSelector() {
 							@Override
 							public String textPrompt() {
-								return "选择要赠送的物品";
+								return isRu ? "Выберите предмет для передачи" :
+										(isZh ? "选择要赠送的物品" : "Select item to give");
 							}
 
 							@Override
@@ -290,7 +303,10 @@ public class NetWndPlayerInfo extends WndTabbed {
 										return;
 									}
 									if (player.getStatus().getGameModeEnum() == Mode.IRONMAN) {
-										NLog.h(hero.name + "是铁人，不能接受你的" + item.name());
+										String ironMsg = isRu ? (hero.name + " играет в режиме 'Железный человек' и не может принять " + item.name()) :
+												(isZh ? (hero.name + "是铁人，不能接受你的" + item.name()) :
+														(hero.name + " is in Ironman mode and cannot accept " + item.name()));
+										NLog.h(ironMsg);
 										return;
 									}
 									Sender.sendGiveItem(new CGiveItem(hero.name, item));

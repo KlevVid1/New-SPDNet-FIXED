@@ -76,7 +76,10 @@ public class SPDNetChangesButton extends StyledButton {
 
 			@Override
 			public void onStart(String url) {
-				updateProgress = "开始下载";
+				boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+				boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+						|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+				updateProgress = isRu ? "Загрузка..." : (isZh ? "开始下载" : "Downloading...");
 			}
 
 			@Override
@@ -88,19 +91,28 @@ public class SPDNetChangesButton extends StyledButton {
 			@Override
 			public void onFinish(File file) {
 				downloadSuccess = true;
-				updateProgress = "下载完成";
+				boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+				boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+						|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+				updateProgress = isRu ? "Загрузка завершена" : (isZh ? "下载完成" : "Download complete");
 				SPDNetChangesButton.file = file;
 				Game.platform.install(file);
 			}
 
 			@Override
 			public void onError(Exception e) {
-				updateProgress = "下载失败";
+				boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+				boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+						|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+				updateProgress = isRu ? "Ошибка загрузки" : (isZh ? "下载失败" : "Download failed");
 			}
 
 			@Override
 			public void onCancel() {
-				updateProgress = "下载失败";
+				boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+				boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+						|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+				updateProgress = isRu ? "Ошибка загрузки" : (isZh ? "下载失败" : "Download failed");
 			}
 		};
 
@@ -143,7 +155,12 @@ public class SPDNetChangesButton extends StyledButton {
 
 			pos = tfMesage.bottom() + 2 * MARGIN;
 
-			RedButton btn = new RedButton("从Github下载") {
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+			String ghLabel = isRu ? "Скачать с GitHub" : (isZh ? "从Github下载" : "Download from GitHub");
+			RedButton btn = new RedButton(ghLabel) {
 				@Override
 				protected void onClick() {
 					if (!downloadSuccess) {
@@ -163,7 +180,9 @@ public class SPDNetChangesButton extends StyledButton {
 			btn.setRect(0, pos, width, BUTTON_HEIGHT);
 			add(btn);
 			pos += BUTTON_HEIGHT + MARGIN;
-			RedButton btn2 = new RedButton("从Gitee下载") {
+
+			String gtLabel = isRu ? "Скачать с Gitee" : (isZh ? "从Gitee下载" : "Download from Gitee");
+			RedButton btn2 = new RedButton(gtLabel) {
 				@Override
 				protected void onClick() {
 					if (!downloadSuccess) {

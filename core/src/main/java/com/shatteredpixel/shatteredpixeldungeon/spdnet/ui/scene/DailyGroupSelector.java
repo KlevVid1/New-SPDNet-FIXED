@@ -18,12 +18,20 @@ public class DailyGroupSelector extends Window {
 	public DailyGroupSelector() {
 		super(PixelScene.landscape() ? WIDTH_L : WIDTH_P, 110, Chrome.get(Chrome.Type.WINDOW));
 
-		RenderedTextBlock title = PixelScene.renderTextBlock("选择每日挑战组别", 9);
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		String titleStr = isRu ? "Категория испытания" : (isZh ? "选择每日挑战组别" : "Daily Challenge Category");
+		RenderedTextBlock title = PixelScene.renderTextBlock(titleStr, 9);
 		title.hardlight(TITLE_COLOR);
 		title.setPos((width - title.width()) / 2, MARGIN);
 		add(title);
 
-		String[] groupNames = {"新手(0-3挑)", "高手(4-6挑)", "大师(7-9挑)"};
+		String[] groupNames = isRu ?
+				new String[]{"Новичок (0-3)", "Опытный (4-6)", "Мастер (7-9)"} :
+				(isZh ? new String[]{"新手(0-3挑)", "高手(4-6挑)", "大师(7-9挑)"} :
+						new String[]{"Beginner (0-3)", "Advanced (4-6)", "Master (7-9)"});
 		String[] seedKeys = {"dailyGroup0", "dailyGroup1", "dailyGroup2"};
 
 		int buttonWidth = (width - MARGIN * 4) / 3;
@@ -35,7 +43,9 @@ public class DailyGroupSelector extends Window {
 			add(button);
 		}
 
-		RenderedTextBlock hint = PixelScene.renderTextBlock("每个组别每天只能挑战一次", 7);
+		String hintStr = isRu ? "Каждую категорию можно пройти один раз в день" :
+				(isZh ? "每个组别每天只能挑战一次" : "Each category can only be attempted once a day");
+		RenderedTextBlock hint = PixelScene.renderTextBlock(hintStr, 7);
 		hint.setPos((width - hint.width()) / 2, startY + BUTTON_HEIGHT + MARGIN);
 		add(hint);
 	}

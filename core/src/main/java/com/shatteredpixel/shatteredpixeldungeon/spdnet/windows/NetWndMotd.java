@@ -21,8 +21,11 @@ public class NetWndMotd extends NetWindow {
 		int width = PixelScene.landscape() ? WIDTH_L : WIDTH_P;
 
 		float pos = 0;
-		//TODO 多语言
-		IconTitle tfTitle = new IconTitle(NetIcons.get(NetIcons.NEWS), "欢迎登录");
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+		String titleText = isRu ? "Добро пожаловать" : (isZh ? "欢迎登录" : "Welcome");
+		IconTitle tfTitle = new IconTitle(NetIcons.get(NetIcons.NEWS), titleText);
 		tfTitle.setRect(0, pos, width, 0);
 		add(tfTitle);
 
@@ -41,7 +44,13 @@ public class NetWndMotd extends NetWindow {
 
 		pos = tfMesage.bottom() + 2 * MARGIN;
 
-		LabeledText seedText = new LabeledText("已登录", Net.name, 8, 8) {
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+		String loggedInLabel = isRu ? "В сети" : (isZh ? "已登录" : "Logged in");
+		String okLabel = isRu ? "OK" : (isZh ? "好好好" : "OK");
+
+		LabeledText seedText = new LabeledText(loggedInLabel, Net.name, 8, 8) {
 			@Override
 			protected void layout() {
 				super.layout();
@@ -51,11 +60,11 @@ public class NetWndMotd extends NetWindow {
 		seedText.setPos(0, pos);
 		add(seedText);
 
-		BlueButton playBtn = new BlueButton("好好好") {
+		BlueButton playBtn = new BlueButton(okLabel) {
 			@Override
 			protected void onClick() {
 				super.onClick();
-				NetWndMotd.this.destroy();
+				NetWndMotd.this.hide();
 			}
 		};
 

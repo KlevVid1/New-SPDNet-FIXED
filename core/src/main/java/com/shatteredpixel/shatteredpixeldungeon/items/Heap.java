@@ -23,6 +23,8 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wraith;
@@ -81,10 +83,16 @@ public class Heap implements Bundlable {
 	
 	public LinkedList<Item> items = new LinkedList<>();
 	
+	public static boolean isNetRemote = false;
+
 	public void open( Hero hero ) {
 		switch (type) {
 		case TOMB:
-			Wraith.spawnAround( hero.pos );
+			if (hero != null) {
+				Wraith.spawnAround( hero.pos );
+			} else {
+				Wraith.spawnAround( pos );
+			}
 			break;
 		case REMAINS:
 		case SKELETON:
@@ -94,22 +102,26 @@ public class Heap implements Bundlable {
 		}
 		
 		if (haunted){
-			if (Wraith.spawnAt( pos ) == null) {
+			if (Wraith.spawnAt( pos ) == null && hero != null) {
 				hero.sprite.emitter().burst( ShadowParticle.CURSE, 6 );
 				hero.damage( hero.HP / 2, this );
 				if (!hero.isAlive()){
 					Dungeon.fail(Wraith.class);
 					GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", Messages.get(Wraith.class, "name"))));
 				}
+			} else if (hero == null) {
+				Wraith.spawnAt( pos );
 			}
 			Sample.INSTANCE.play( Assets.Sounds.CURSED );
 		}
 
 		type = Type.HEAP;
-		ArrayList<Item> bonus = RingOfWealth.tryForBonusDrop(hero, 1);
-		if (bonus != null && !bonus.isEmpty()) {
-			items.addAll(0, bonus);
-			RingOfWealth.showFlareForBonusDrop(sprite);
+		if (hero != null) {
+			ArrayList<Item> bonus = RingOfWealth.tryForBonusDrop(hero, 1);
+			if (bonus != null && !bonus.isEmpty()) {
+				items.addAll(0, bonus);
+				RingOfWealth.showFlareForBonusDrop(sprite);
+			}
 		}
 		sprite.link();
 		sprite.drop();
@@ -143,6 +155,10 @@ public class Heap implements Bundlable {
 			sprite.view(this).place( pos );
 		}
 		
+		if (!isNetRemote && Dungeon.level != null && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemPickUp(Dungeon.depth, pos);
+		}
+
 		return item;
 	}
 	

@@ -34,7 +34,18 @@ public enum Actions {
 	// SPDNet: Journal 相关事件（原为裸字符串，现纳入枚举统一管理）
 	CATALOG_UPDATE("catalogUpdate"),
 	BESTIARY_UPDATE("bestiaryUpdate"),
-	DOCUMENT_UPDATE("documentUpdate");
+	DOCUMENT_UPDATE("documentUpdate"),
+	// SPDNet Co-op: Синхронизация предметов на полу
+	ITEM_DROP("itemDrop"),
+	ITEM_PICKUP("itemPickUp"),
+	// SPDNet Co-op: Синхронизация мобов и боссов
+	MOB_DAMAGE("mobDamage"),
+	MOB_DIE("mobDie"),
+	MOB_MOVE("mobMove"),
+	MOB_ATTACK("mobAttack"),
+	MOB_SPAWN("mobSpawn"),
+	TERRAIN_CHANGE("terrainChange"),
+	CHEST_OPEN("chestOpen");
 
 	private final String name;
 

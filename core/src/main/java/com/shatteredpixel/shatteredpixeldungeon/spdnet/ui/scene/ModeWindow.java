@@ -66,27 +66,42 @@ public class ModeWindow extends Window {
 		@Override
 		public void update() {
 			super.update();
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+			String dailyShort = isRu ? "Дейли" : (isZh ? mode.getName().substring(0, 2) : "Daily");
+
 			if (mode == NetInProgress.mode) {
 				bg = Chrome.get(Chrome.Type.RED_BUTTON);
 				if (mode == Mode.DAILY && NetInProgress.dailyGroupIndex >= 0) {
 					String suffix = getDailySuffix(NetInProgress.dailyGroupIndex);
-					text(mode.getName().substring(0, 2) + "-" + suffix);
+					text(dailyShort + "-" + suffix);
 				}
 			} else {
 				bg = SPDNetChrome.get(SPDNetChrome.Type.BUTTON);
 				if (mode == Mode.DAILY) {
-					text(mode.getName().substring(0, 2));
+					text(dailyShort);
 				}
 			}
 		}
 
 		private String getDailySuffix(int groupIndex) {
-			if (groupIndex == 0) {
-				return "新手";
-			} else if (groupIndex == 1) {
-				return "高手";
-			} else if (groupIndex == 2) {
-				return "大师";
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+			if (isZh) {
+				if (groupIndex == 0) return "新手";
+				if (groupIndex == 1) return "高手";
+				if (groupIndex == 2) return "大师";
+			} else if (isRu) {
+				if (groupIndex == 0) return "Новичок";
+				if (groupIndex == 1) return "Опытный";
+				if (groupIndex == 2) return "Мастер";
+			} else {
+				if (groupIndex == 0) return "Beginner";
+				if (groupIndex == 1) return "Advanced";
+				if (groupIndex == 2) return "Master";
 			}
 			return "";
 		}

@@ -26,7 +26,7 @@ import java.util.Set;
 public class NetHero extends Hero {
 
 	{
-		alignment = Alignment.NEUTRAL;
+		alignment = Alignment.ALLY;
 	}
 
 	public String name;
@@ -147,10 +147,25 @@ public class NetHero extends Hero {
 	}
 
 	@Override
+	public void onMotionComplete() {
+		super.onMotionComplete();
+		if (sprite != null && sprite.looping()) {
+			sprite.idle();
+		}
+	}
+
+	@Override
 	public void move(int newPos, boolean travelling) {
-		// 简简单单改个位
-		sprite.interruptMotion();
-		sprite.move(pos, newPos);
+		if (pos == newPos) {
+			if (sprite != null && sprite.looping()) {
+				sprite.idle();
+			}
+			return;
+		}
+		if (sprite != null) {
+			sprite.interruptMotion();
+			sprite.move(pos, newPos);
+		}
 		pos = newPos;
 	}
 
@@ -167,24 +182,32 @@ public class NetHero extends Hero {
 	 * 把当前在线玩家与当前楼层同步
 	 */
 	public static void syncWithCurrentLevel() {
-		if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-			Set<Map.Entry<String, Player>> entries = Net.playerList.entrySet();
-			for (Map.Entry<String, Player> entry : entries) {
-				addPlayerToDungeon(entry.getValue());
+		Game.runOnRenderThread(() -> {
+			if (ShatteredPixelDungeon.scene() instanceof GameScene && Dungeon.level != null) {
+				for (Player player : Net.playerList.values()) {
+					addPlayerToDungeonInternal(player);
+				}
 			}
-		}
+		});
 	}
 
 	public static void addPlayerToDungeon(Player player) {
-		if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+		Game.runOnRenderThread(() -> {
+			addPlayerToDungeonInternal(player);
+		});
+	}
+
+	private static void addPlayerToDungeonInternal(Player player) {
+		if (ShatteredPixelDungeon.scene() instanceof GameScene && Dungeon.level != null) {
+			if (player == null || player.getName() == null || player.getName().equals(Net.name)) {
+				return;
+			}
 			Status status = player.getStatus();
 			if (status == null) {
 				return;
 			}
 			// 防止重复添加
-			if (NetHero.getPlayerFromDungeon(player.getName()) != null) {
-				removePlayerFromDungeon(player.getName());
-			}
+			removePlayerFromDungeonInternal(player.getName());
 			if (status.getSeed() == Dungeon.seed && status.getDepth() == Dungeon.depth) {
 				NetHero hero = new NetHero(player.getName());
 				hero.heroClass = status.getHeroClassEnum();
@@ -197,7 +220,13 @@ public class NetHero extends Hero {
 	}
 
 	public static void removePlayerFromDungeon(String name) {
-		if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+		Game.runOnRenderThread(() -> {
+			removePlayerFromDungeonInternal(name);
+		});
+	}
+
+	private static void removePlayerFromDungeonInternal(String name) {
+		if (ShatteredPixelDungeon.scene() instanceof GameScene && Dungeon.level != null && name != null) {
 			NetHero hero = getPlayerFromDungeon(name);
 			if (hero != null) {
 				hero.destroy();
@@ -206,11 +235,11 @@ public class NetHero extends Hero {
 	}
 
 	public static NetHero getPlayerFromDungeon(String name) {
-		if (!(ShatteredPixelDungeon.scene() instanceof GameScene) || Dungeon.level == null) {
+		if (!(ShatteredPixelDungeon.scene() instanceof GameScene) || Dungeon.level == null || Dungeon.level.players == null || name == null) {
 			return null;
 		}
 		for (NetHero player : Dungeon.level.players) {
-			if (player.name.equals(name)) {
+			if (player != null && name.equals(player.name)) {
 				return player;
 			}
 		}
@@ -220,5 +249,17 @@ public class NetHero extends Hero {
 	@Override
 	public int shielding() {
 		return shield;
+	}
+
+	@Override
+	public void damage(int dmg, Object src) {
+		super.damage(dmg, src);
+		// Если моб нанёс урон на Хосте, отправляем уведомление удалённому клиенту
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning() && Dungeon.level != null) {
+			int mobSyncId = (src instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob) ?
+					((com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob) src).syncId : 0;
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobAttack(
+					Dungeon.depth, mobSyncId, pos, this.name, dmg);
+		}
 	}
 }

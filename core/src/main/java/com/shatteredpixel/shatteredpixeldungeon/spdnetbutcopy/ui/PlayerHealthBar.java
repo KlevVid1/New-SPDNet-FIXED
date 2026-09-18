@@ -95,7 +95,7 @@ public class PlayerHealthBar extends CharHealthIndicator {
 			playerName.y = y - 4;
 		}
 
-		if (challengeText.text().isEmpty() || challengeText.text().equals("0挑")) {
+		if (target == null || target.challenge <= 0) {
 			challengeIcon.visible = false;
 			challengeText.visible = false;
 		} else {
@@ -133,7 +133,9 @@ public class PlayerHealthBar extends CharHealthIndicator {
 			width = sprite.width();
 			x = sprite.x;
 			y = sprite.y - 3;
-			challengeText.text(target.challenge + "挑");
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+			challengeText.text(isZh ? (target.challenge + "挑") : String.valueOf(target.challenge));
 			playerName.text(target.name);
 			level(target);
 			visible = true;

@@ -1,10 +1,14 @@
-// 把Evan的apply plugin换成使用更好的Plugins代码块
 plugins {
     id 'com.android.application'
 
-    // 添加获取调试信息用的Firebase
-    id 'com.google.gms.google-services'
-    id 'com.google.firebase.crashlytics'
+    // 添加获取调试信息用的Firebase (仅当 google-services.json 存在时应用，避免本地构建失败)
+    id 'com.google.gms.google-services' apply false
+    id 'com.google.firebase.crashlytics' apply false
+}
+
+if (file('google-services.json').exists() || file('src/debug/google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+    apply plugin: 'com.google.firebase.crashlytics'
 }
 
 

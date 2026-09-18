@@ -1,6 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.spdnet.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.ui.NetIcons;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.ui.SPDNetChrome;
@@ -18,6 +19,14 @@ public class NetWindow extends Window {
 		super(0, 0, SPDNetChrome.get(SPDNetChrome.Type.WINDOW));
 	}
 
+	@Override
+	public void destroy() {
+		if (parent != null) {
+			parent.erase(this);
+		}
+		super.destroy();
+	}
+
 	public static void message(Image i, String title, String message) {
 		Game.runOnRenderThread(() -> ShatteredPixelDungeon.scene().add(new NetWndMessage(i, title, message)));
 	}
@@ -27,7 +36,10 @@ public class NetWindow extends Window {
 	}
 
 	public static void message(String message) {
-		message(NetIcons.get(NetIcons.GLOBE), "服务器系统消息", message);
+		boolean isRu = Messages.lang() == Languages.RUSSIAN;
+		boolean isZh = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
+		String title = isRu ? "Сообщение сервера" : (isZh ? "服务器系统消息" : "Server message");
+		message(NetIcons.get(NetIcons.GLOBE), title, message);
 	}
 
 	public static void error(String message) {

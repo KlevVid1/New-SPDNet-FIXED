@@ -11,7 +11,12 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.TitleScene;
 import com.shatteredpixel.shatteredpixeldungeon.spdnetbutcopy.scene.NetRankingsScene;
 import me.catand.spdnet.protocol.Events;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.NetInProgress;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.Status;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CEnterDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.events.*;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.windows.NetWindow;
 import com.watabou.noosa.Game;
 
@@ -26,32 +31,65 @@ import io.socket.emitter.Emitter;
 public class Receiver {
 	public static void startAll() {
 		Emitter.Listener onConnected = args -> {
+			Game.runOnRenderThread(() -> {
+				if (ShatteredPixelDungeon.scene() instanceof GameScene && Dungeon.hero != null) {
+					Status status1 = new Status(Dungeon.challenges,
+							Dungeon.seed,
+							Dungeon.hero.heroClass.ordinal(),
+							NetInProgress.mode.ordinal(),
+							Dungeon.depth,
+							Dungeon.hero.tier(),
+							Dungeon.hero.pos);
+					CEnterDungeon enterDungeon = new CEnterDungeon(status1);
+					Sender.sendEnterDungeon(enterDungeon);
+					NetHero.syncWithCurrentLevel();
+				}
+			});
 		};
 		Emitter.Listener onDisconnected = args -> {
-			// SPDNet: 断开连接时重置成就系统为本地模式
 			Badges.resetToLocalMode();
-			
-			if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-				try {
-					Dungeon.saveAll();
-				} catch (IOException e) {
-					ShatteredPixelDungeon.reportException(e);
-				}
-				Game.switchScene(TitleScene.class);
-			} else if (ShatteredPixelDungeon.scene() instanceof NetRankingsScene) {
-				Game.switchScene(TitleScene.class);
+			if (getSocket() == null || !getSocket().io().isReconnecting()) {
+				cancelAll();
 			}
-			cancelAll();
-			NetWindow.error("与服务器断开连接");
+
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+			String dcMsg = isRu ? "Отключено от сервера" : (isZh ? "与服务器断开连接" : "Disconnected from server");
+
+			Game.runOnRenderThread(() -> {
+				if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+					GameScene.clearPlayers();
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w(dcMsg);
+				} else if (ShatteredPixelDungeon.scene() instanceof NetRankingsScene) {
+					Game.switchScene(TitleScene.class);
+				} else {
+					NetWindow.error(dcMsg);
+				}
+			});
 		};
 		Emitter.Listener onConnectionError = args -> {
-			// SPDNet: 添加连接错误处理，向用户显示错误信息
-			String errorMessage = "连接服务器失败";
-			if (args != null && args.length > 0 && args[0] != null) {
-				errorMessage += ": " + args[0].toString();
+			if (getSocket() == null || !getSocket().io().isReconnecting()) {
+				cancelAll();
 			}
-			NetWindow.error(errorMessage);
-			cancelAll();
+
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+			String errorMessage = isRu ? "Ошибка подключения к серверу" : (isZh ? "连接服务器失败" : "Connection to server failed");
+			if (args != null && args.length > 0 && args[0] != null) {
+				errorMessage += ":\n" + args[0].toString();
+			}
+
+			String finalMsg = errorMessage;
+			Game.runOnRenderThread(() -> {
+				if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+					GameScene.clearPlayers();
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w(finalMsg);
+				} else {
+					NetWindow.error(finalMsg);
+				}
+			});
 		};
 		Emitter.Listener onAchievement = args -> {
 			Handler.handleAchievement(JSON.parseObject(args[0].toString(), SAchievement.class));
@@ -84,7 +122,12 @@ public class Receiver {
 			Handler.handleGiveItem(JSON.parseObject(args[0].toString(), SGiveItem.class));
 		};
 		Emitter.Listener onHero = args -> {
-			Handler.handleHero(JSON.parseObject(args[0].toString(), SHero.class));
+			try {
+				NLog.i("Receiver: onHero received");
+				Handler.handleHero(JSON.parseObject(args[0].toString(), SHero.class));
+			} catch (Exception e) {
+				NLog.w("Receiver: onHero error: " + e.getMessage());
+			}
 		};
 		Emitter.Listener onInit = args -> {
 			Handler.handleInit(JSON.parseObject(args[0].toString(), SInit.class));
@@ -130,6 +173,47 @@ public class Receiver {
 		Emitter.Listener onNoteNotify = args -> {
 			Handler.handleNoteNotify(JSON.parseObject(args[0].toString(), SServerMessage.class));
 		};
+		// SPDNet Co-op: Синхронизация предметов на полу
+		Emitter.Listener onItemDrop = args -> {
+			Handler.handleItemDrop(JSON.parseObject(args[0].toString(), SItemDrop.class));
+		};
+		Emitter.Listener onItemPickUp = args -> {
+			Handler.handleItemPickUp(JSON.parseObject(args[0].toString(), SItemPickUp.class));
+		};
+		// SPDNet Co-op: Синхронизация мобов и боссов
+		Emitter.Listener onMobDamage = args -> {
+			Handler.handleMobDamage(JSON.parseObject(args[0].toString(), SMobDamage.class));
+		};
+		Emitter.Listener onMobDie = args -> {
+			Handler.handleMobDie(JSON.parseObject(args[0].toString(), SMobDie.class));
+		};
+		Emitter.Listener onMobMove = args -> {
+			Handler.handleMobMove(JSON.parseObject(args[0].toString(), SMobMove.class));
+		};
+		Emitter.Listener onMobAttack = args -> {
+			Handler.handleMobAttack(JSON.parseObject(args[0].toString(), SMobAttack.class));
+		};
+		Emitter.Listener onMobSpawn = args -> {
+			try {
+				Handler.handleMobSpawn(JSON.parseObject(args[0].toString(), SMobSpawn.class));
+			} catch (Exception e) {
+				NLog.w("Receiver: onMobSpawn error: " + e.getMessage());
+			}
+		};
+		Emitter.Listener onTerrainChange = args -> {
+			try {
+				Handler.handleTerrainChange(JSON.parseObject(args[0].toString(), STerrainChange.class));
+			} catch (Exception e) {
+				NLog.w("Receiver: onTerrainChange error: " + e.getMessage());
+			}
+		};
+		Emitter.Listener onChestOpen = args -> {
+			try {
+				Handler.handleChestOpen(JSON.parseObject(args[0].toString(), SChestOpen.class));
+			} catch (Exception e) {
+				NLog.w("Receiver: onChestOpen error: " + e.getMessage());
+			}
+		};
 		getSocket().on(Socket.EVENT_CONNECT, onConnected);
 		getSocket().on(Socket.EVENT_DISCONNECT, onDisconnected);
 		getSocket().on(Socket.EVENT_CONNECT_ERROR, onConnectionError);
@@ -158,6 +242,15 @@ public class Receiver {
 		getSocket().on(Events.REJECT_DAILY_CHALLENGE.getName(), onRejectDailyChallenge);
 		getSocket().on(Events.NOTE_LIST.getName(), onNoteList);
 		getSocket().on(Events.NOTE_NOTIFY.getName(), onNoteNotify);
+		getSocket().on(Events.ITEM_DROP.getName(), onItemDrop);
+		getSocket().on(Events.ITEM_PICKUP.getName(), onItemPickUp);
+		getSocket().on(Events.MOB_DAMAGE.getName(), onMobDamage);
+		getSocket().on(Events.MOB_DIE.getName(), onMobDie);
+		getSocket().on(Events.MOB_MOVE.getName(), onMobMove);
+		getSocket().on(Events.MOB_ATTACK.getName(), onMobAttack);
+		getSocket().on(Events.MOB_SPAWN.getName(), onMobSpawn);
+		getSocket().on(Events.TERRAIN_CHANGE.getName(), onTerrainChange);
+		getSocket().on(Events.CHEST_OPEN.getName(), onChestOpen);
 	}
 
 	public static void cancelAll() {

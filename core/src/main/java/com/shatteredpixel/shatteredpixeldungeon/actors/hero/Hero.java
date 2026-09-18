@@ -980,8 +980,6 @@ public class Hero extends Char {
 	private boolean actMove( HeroAction.Move action ) {
 
 		if (getCloser( action.dst )) {
-			// 发送移动数据
-			Sender.sendPlayerMove(new CPlayerMove(pos));
 			canSelfTrample = false;
 			return true;
 
@@ -2305,6 +2303,10 @@ public class Hero extends Char {
 		boolean wasHighGrass = Dungeon.level.map[step] == Terrain.HIGH_GRASS;
 
 		super.move( step, travelling);
+
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			Sender.sendPlayerMove(new CPlayerMove(pos));
+		}
 		
 		if (!flying && travelling) {
 			if (Dungeon.level.water[pos]) {
@@ -2446,6 +2448,9 @@ public class Hero extends Char {
 				if (hasKey) {
 					GameScene.updateKeyDisplay();
 					heap.open(this);
+					if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+						com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendChestOpen(Dungeon.depth, heap.pos);
+					}
 					spend(Key.TIME_TO_UNLOCK);
 				}
 			}

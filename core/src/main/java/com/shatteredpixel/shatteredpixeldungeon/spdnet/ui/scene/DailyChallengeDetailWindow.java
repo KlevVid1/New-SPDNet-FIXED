@@ -48,12 +48,18 @@ public class DailyChallengeDetailWindow extends Window {
 		add(title);
 		y += title.height() + MARGIN;
 
-		RenderedTextBlock dateText = PixelScene.renderTextBlock("日期: " + recordDate, 8);
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		String datePrefix = isRu ? "Дата: " : (isZh ? "日期: " : "Date: ");
+		RenderedTextBlock dateText = PixelScene.renderTextBlock(datePrefix + recordDate, 8);
 		dateText.setPos(MARGIN, y);
 		add(dateText);
 		y += dateText.height() + MARGIN * 2;
 
-		RenderedTextBlock challengeTitle = PixelScene.renderTextBlock("挑战预览:", 8);
+		String prevTitle = isRu ? "Предпросмотр испытания:" : (isZh ? "挑战预览:" : "Challenge preview:");
+		RenderedTextBlock challengeTitle = PixelScene.renderTextBlock(prevTitle, 8);
 		challengeTitle.hardlight(TITLE_COLOR);
 		challengeTitle.setPos(MARGIN, y);
 		add(challengeTitle);
@@ -73,7 +79,9 @@ public class DailyChallengeDetailWindow extends Window {
 		y += MARGIN;
 
 		if (hasExistingRecord) {
-			RenderedTextBlock warningText = PixelScene.renderTextBlock("你已经创建过该组别的挑战！", 8);
+			String warn = isRu ? "Вы уже проходили эту категорию сегодня!" :
+					(isZh ? "你已经创建过该组别的挑战！" : "You have already attempted this category today!");
+			RenderedTextBlock warningText = PixelScene.renderTextBlock(warn, 8);
 			warningText.hardlight(0xFF6666);
 			warningText.setPos(MARGIN, y);
 			add(warningText);
@@ -82,7 +90,8 @@ public class DailyChallengeDetailWindow extends Window {
 
 		int buttonWidth = (WIDTH - MARGIN * 3) / 2;
 
-		StyledButton confirmBtn = new StyledButton(Chrome.Type.RED_BUTTON, "确定", 8) {
+		String okLabel = isRu ? "OK" : (isZh ? "确定" : "OK");
+		StyledButton confirmBtn = new StyledButton(Chrome.Type.RED_BUTTON, okLabel, 8) {
 			@Override
 			protected void onClick() {
 				if (hasExistingRecord) {
@@ -97,7 +106,8 @@ public class DailyChallengeDetailWindow extends Window {
 		confirmBtn.setRect(MARGIN, y, buttonWidth, BUTTON_HEIGHT);
 		add(confirmBtn);
 
-		StyledButton cancelBtn = new StyledButton(Chrome.Type.RED_BUTTON, "取消", 8) {
+		String cancelLabel = isRu ? "Отмена" : (isZh ? "取消" : "Cancel");
+		StyledButton cancelBtn = new StyledButton(Chrome.Type.RED_BUTTON, cancelLabel, 8) {
 			@Override
 			protected void onClick() {
 				NetInProgress.resetDailyChallenge();
@@ -130,14 +140,25 @@ public class DailyChallengeDetailWindow extends Window {
 	}
 
 	private String getGroupName(int groupIndex) {
-		if (groupIndex == 0) {
-			return "新手(0-3挑)";
-		} else if (groupIndex == 1) {
-			return "高手(4-6挑)";
-		} else if (groupIndex == 2) {
-			return "大师(7-9挑)";
-		} else {
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		if (isZh) {
+			if (groupIndex == 0) return "新手(0-3挑)";
+			if (groupIndex == 1) return "高手(4-6挑)";
+			if (groupIndex == 2) return "大师(7-9挑)";
 			return "未知组别";
 		}
+		if (isRu) {
+			if (groupIndex == 0) return "Новичок (0-3 исп.)";
+			if (groupIndex == 1) return "Опытный (4-6 исп.)";
+			if (groupIndex == 2) return "Мастер (7-9 исп.)";
+			return "Неизвестная категория";
+		}
+		if (groupIndex == 0) return "Beginner (0-3 chlng.)";
+		if (groupIndex == 1) return "Advanced (4-6 chlng.)";
+		if (groupIndex == 2) return "Master (7-9 chlng.)";
+		return "Unknown category";
 	}
 }

@@ -173,16 +173,14 @@ public class HeroSelectScene extends PixelScene {
 			@Override
 			protected void onClick() {
 				super.onClick();
-				// 禁止没连服务器的进游戏
-				if (!Net.isConnected()){
-					NetWindow.error(Messages.get(HeroSelectScene.class, "no_connection_title"), Messages.get(HeroSelectScene.class, "no_connection_desc"));
-					return;
-				}
 				if (GamesInProgress.selectedClass == null) return;
 
 				Dungeon.hero = null;
 				Dungeon.daily = Dungeon.dailyReplay = false;
 				Dungeon.initSeed();
+				if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning() && Dungeon.seed != 0) {
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(Dungeon.seed);
+				}
 				ActionIndicator.clearAction();
 				InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
 

@@ -16,7 +16,7 @@ public class ChatBtn extends Tag {
 		super(0xFF4C4C);
 		setSize(icon.width() + 6, icon.height() + 6);
 		flip(true);
-		visible = true;
+		visible = active = Net.isConnected();
 		bg.hardlight(0xffff44);
 	}
 
@@ -41,8 +41,20 @@ public class ChatBtn extends Tag {
 		if (Net.isConnected()) {
 			Game.runOnRenderThread(() -> ShatteredPixelDungeon.scene().add(new NetWndChat()));
 		} else {
-			NetWindow.error("未连接", "你必须连接后才能与其他玩家畅聊");
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+			String title = isRu ? "Не подключено" : (isZh ? "未连接" : "Not connected");
+			String msg = isRu ? "Для использования чата необходимо подключение к серверу или локальному хосту." :
+					(isZh ? "你必须连接后才能与其他玩家畅聊" : "You must connect to chat with other players.");
+			NetWindow.error(title, msg);
 		}
+	}
+
+	@Override
+	public synchronized void update() {
+		super.update();
+		visible = active = Net.isConnected();
 	}
 }
 

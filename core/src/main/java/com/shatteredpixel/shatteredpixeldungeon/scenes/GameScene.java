@@ -58,6 +58,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.journal.Guidebook;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.InventoryScroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.DimensionalSundial;
@@ -810,9 +811,8 @@ public class GameScene extends PixelScene {
 			}
 		}
 
-		// SPDNet: 仅在进入新楼层时发送进入地牢消息，避免窗口大小改变时重复发送
-		// 通过比较当前楼层和种子与上次发送时的记录来判断是否为新楼层
-		if (Dungeon.depth != lastEnterDepth || Dungeon.seed != lastEnterSeed) {
+		// SPDNet: 仅在连接服务器且进入新楼层时发送进入地牢消息，避免窗口大小改变时重复发送
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && (Dungeon.depth != lastEnterDepth || Dungeon.seed != lastEnterSeed)) {
 			// 发送进入地牢信息
 			Status status1 = new Status(Dungeon.challenges,
 					Dungeon.seed,
@@ -1254,6 +1254,16 @@ public class GameScene extends PixelScene {
 	
 	public static void add( Mob mob, float delay ) {
 		Dungeon.level.mobs.add( mob );
+
+		// SPDNet Co-op: При динамическом спавне моба на хосте выдаём ему syncId и уведомляем клиентов
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()
+				&& mob.syncId == 0 && Dungeon.level != null) {
+			mob.syncId = ++Dungeon.level.maxMobSyncId;
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobSpawn(
+					Dungeon.depth, mob.syncId, mob.getClass().getName(), mob.pos, mob.HP, mob.HT);
+		}
+
 		//mobs added on partial turns wait until next full turn to act
 		delay = (float)Math.ceil(Actor.now() + delay) - Actor.now();
 		if (scene != null) {
@@ -1835,7 +1845,10 @@ public class GameScene extends PixelScene {
 			// SPDNet: 地牢留言(Ping)系统 - 查看专用虚对象
 			else if (obj instanceof NetNoteStore.CellNotes) {
 				int cnt = NetNoteStore.notesAt(((NetNoteStore.CellNotes) obj).pos).size();
-				names.add("留言(" + cnt + "条)");
+				boolean isRu = Messages.lang() == Languages.RUSSIAN;
+				boolean isZh = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
+				String noteLabel = isRu ? ("Заметки (" + cnt + ")") : (isZh ? ("留言(" + cnt + "条)") : ("Notes (" + cnt + ")"));
+				names.add(noteLabel);
 			}
 		}
 		return names;

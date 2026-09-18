@@ -40,6 +40,23 @@ public class Journal {
 	private static boolean loaded = false;
 	
 	public static void loadGlobal(){
+		if (loaded){
+			return;
+		}
+		
+		Bundle bundle;
+		try {
+			bundle = FileUtils.bundleFromFile( JOURNAL_FILE );
+			
+		} catch (IOException e){
+			bundle = new Bundle();
+		}
+		
+		Catalog.restore( bundle );
+		Bestiary.restore( bundle );
+		Document.restore( bundle );
+		
+		loaded = true;
 	}
 
 	// SPDNet: 从云端加载 Journal 数据
@@ -92,6 +109,8 @@ public class Journal {
 				}
 			}
 		}
+
+		saveGlobal(true);
 	}
 
 	//package-private
@@ -101,7 +120,9 @@ public class Journal {
 	// SPDNet: 发送 Catalog 更新到服务器
 	public static void sendCatalogUpdate(String catalogType, String itemClass, boolean seen, int useCount) {
 		try {
-			Sender.sendCatalogUpdate(new CCatalogUpdate(catalogType, itemClass, seen, useCount));
+			if (Net.isConnected()) {
+				Sender.sendCatalogUpdate(new CCatalogUpdate(catalogType, itemClass, seen, useCount));
+			}
 		} catch (Exception e) {
 			ShatteredPixelDungeon.reportException(e);
 		}
@@ -110,7 +131,9 @@ public class Journal {
 	// SPDNet: 发送 Bestiary 更新到服务器
 	public static void sendBestiaryUpdate(String bestiaryType, String entityClass, boolean seen, int encountered) {
 		try {
-			Sender.sendBestiaryUpdate(new CBestiaryUpdate(bestiaryType, entityClass, seen, encountered));
+			if (Net.isConnected()) {
+				Sender.sendBestiaryUpdate(new CBestiaryUpdate(bestiaryType, entityClass, seen, encountered));
+			}
 		} catch (Exception e) {
 			ShatteredPixelDungeon.reportException(e);
 		}
@@ -119,7 +142,9 @@ public class Journal {
 	// SPDNet: 发送 Document 更新到服务器
 	public static void sendDocumentUpdate(String documentType, String pageName, int state) {
 		try {
-			Sender.sendDocumentUpdate(new CDocumentUpdate(documentType, pageName, state));
+			if (Net.isConnected()) {
+				Sender.sendDocumentUpdate(new CDocumentUpdate(documentType, pageName, state));
+			}
 		} catch (Exception e) {
 			ShatteredPixelDungeon.reportException(e);
 		}
@@ -130,6 +155,22 @@ public class Journal {
 	}
 
 	public static void saveGlobal(boolean force){
+		if (!force && !saveNeeded){
+			return;
+		}
+		
+		Bundle bundle = new Bundle();
+		
+		Catalog.store(bundle);
+		Bestiary.store(bundle);
+		Document.store(bundle);
+		
+		try {
+			FileUtils.bundleToFile( JOURNAL_FILE, bundle );
+			saveNeeded = false;
+		} catch (IOException e) {
+			ShatteredPixelDungeon.reportException(e);
+		}
 	}
 
 }

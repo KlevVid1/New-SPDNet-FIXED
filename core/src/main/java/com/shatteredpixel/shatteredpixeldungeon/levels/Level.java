@@ -122,6 +122,8 @@ import com.watabou.utils.SparseArray;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
@@ -322,6 +324,7 @@ public abstract class Level implements Bundlable {
 		cleanWalls();
 		
 		createMobs();
+		initMobSyncIds();
 		createItems();
 
 		Random.popGenerator();
@@ -441,6 +444,7 @@ public abstract class Level implements Bundlable {
 				mobs.add( mob );
 			}
 		}
+		initMobSyncIds();
 		
 		collection = bundle.getCollection( BLOBS );
 		for (Bundlable b : collection) {
@@ -462,10 +466,37 @@ public abstract class Level implements Bundlable {
 		if (bundle.contains( "respawner" )){
 			respawner = (MobSpawner) bundle.get("respawner");
 		}
+		if (bundle.contains( "max_mob_sync_id" )){
+			maxMobSyncId = bundle.getInt( "max_mob_sync_id" );
+		}
 
 		buildFlagMaps();
 		cleanWalls();
 
+	}
+
+	public int maxMobSyncId = 0;
+
+	public void initMobSyncIds() {
+		if (mobs == null || mobs.isEmpty()) {
+			return;
+		}
+		ArrayList<Mob> sortedMobs = new ArrayList<>(mobs);
+		Collections.sort(sortedMobs, new Comparator<Mob>() {
+			@Override
+			public int compare(Mob a, Mob b) {
+				return Integer.compare(a.pos, b.pos);
+			}
+		});
+		int id = 1;
+		for (Mob m : sortedMobs) {
+			if (m != null && m.syncId == 0) {
+				m.syncId = id++;
+			} else if (m != null && m.syncId >= id) {
+				id = m.syncId + 1;
+			}
+		}
+		maxMobSyncId = Math.max(maxMobSyncId, id);
 	}
 	
 	@Override
@@ -488,6 +519,7 @@ public abstract class Level implements Bundlable {
 		bundle.put( FEELING, feeling );
 		bundle.put( "mobs_to_spawn", mobsToSpawn.toArray(new Class[0]));
 		bundle.put( "respawner", respawner );
+		bundle.put( "max_mob_sync_id", maxMobSyncId );
 	}
 	
 	public int tunnelTile() {
@@ -944,11 +976,16 @@ public abstract class Level implements Bundlable {
 		}
 	}
 	
+	public static boolean isRemoteTerrainChange = false;
+	public static boolean isRemoteDrop = false;
+	public static boolean suppressMobDrops = false;
+
 	public static void set( int cell, int terrain ){
 		set( cell, terrain, Dungeon.level );
 	}
 	
 	public static void set( int cell, int terrain, Level level ) {
+		int oldTerrain = level.map[cell];
 		Painter.set(level, cell, terrain);
 
 		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP && terrain != Terrain.INACTIVE_TRAP) {
@@ -956,6 +993,12 @@ public abstract class Level implements Bundlable {
 		}
 
 		level.updateCellFlags(cell);
+
+		if (!isRemoteTerrainChange && level == Dungeon.level && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			if (oldTerrain != terrain) {
+				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendTerrainChange(Dungeon.depth, cell, terrain);
+			}
+		}
 	}
 
 	public void updateCellFlags( int cell ){
@@ -986,7 +1029,7 @@ public abstract class Level implements Bundlable {
 	
 	public Heap drop( Item item, int cell ) {
 
-		if (item == null || Challenges.isItemBlocked(item)){
+		if (item == null || Challenges.isItemBlocked(item) || suppressMobDrops){
 
 			//create a dummy heap, give it a dummy sprite, don't add it to the game, and return it.
 			//effectively nullifies whatever the logic calling this wants to do, including dropping items.
@@ -1026,6 +1069,10 @@ public abstract class Level implements Bundlable {
 		
 		if (Dungeon.level != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 			pressCell( cell );
+		}
+
+		if (!isRemoteDrop && this == Dungeon.level && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemDrop(Dungeon.depth, cell, item);
 		}
 		
 		return heap;

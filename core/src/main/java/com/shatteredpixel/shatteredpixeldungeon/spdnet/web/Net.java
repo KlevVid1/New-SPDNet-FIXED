@@ -21,18 +21,28 @@ import lombok.Getter;
  */
 public class Net {
 	static private Socket socket;
-	// 服务器地址
+	// 服务器地址 (по умолчанию локальный адрес, полностью отвязано от внешних серверов)
 	@Getter
-	private static String serverUrl = isDebug() ? "http://127.0.0.1:32814/spdnet" : "http://120.48.142.75:32814/spdnet";
+	private static String serverUrl = "http://127.0.0.1:32814/spdnet";
 	// 服务器的种子列表
 	public static ConcurrentHashMap<String, Long> seeds = new ConcurrentHashMap<>();
 	// 玩家名
-	public static String name = "未登录";
+	public static String name = "";
+
+	public static String getDisplayName() {
+		if (name == null || name.isEmpty() || name.equals("未登录")) {
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+			return isRu ? "Не в сети" : (isZh ? "未登录" : "Offline");
+		}
+		return name;
+	}
 	// <PlayerKey{玩家名, 玩家权限}, 玩家状态>, 如果当前玩家没在游戏内, Status的层数为-1
 	public static ConcurrentHashMap<String, Player> playerList = new ConcurrentHashMap<>();
 	public static Vector<String> chatMessages = new Vector<>();
 	@lombok.Setter
-	public static String webUrl = "http://jdsalingzx.top";
+	public static String webUrl = "http://127.0.0.1:32814";
 
 	/**
 	 * 获取一个socketIO对象
@@ -46,8 +56,14 @@ public class Net {
 		if (socket == null) {
 			try {
 				IO.Options opts = new IO.Options();
-				opts.reconnection = false;
-				opts.query = "name=" + NetSettings.getName() + "&password=" + NetSettings.getPassword() + "&SPDVersion=" + Game.version + "&NetVersion=" + Game.netVersion;
+				opts.reconnection = true;
+				opts.reconnectionAttempts = 10;
+				opts.reconnectionDelay = 1000;
+				opts.timeout = 20000;
+				opts.transports = new String[] { "websocket" };
+				String clientName = (name != null && !name.isEmpty() && !name.equals("未登录") && !name.equals("Не авторизован") && !name.equals("Not logged in")) ? name : NetSettings.getName();
+				String clientPassword = NetSettings.getPassword();
+				opts.query = "name=" + clientName + "&password=" + clientPassword + "&SPDVersion=" + Game.version + "&NetVersion=" + Game.netVersion;
 				socket = IO.socket(serverUrl, opts);
 			} catch (URISyntaxException e) {
 				throw new RuntimeException(e);
@@ -93,25 +109,39 @@ public class Net {
 	 * 完全销毁所有socket相关的对象，重置连接
 	 */
 	public static void destroySocket() {
-		if (isConnected()) {
-			disConnect();
+		if (socket != null) {
+			try {
+				if (isConnected()) {
+					disConnect();
+				}
+				socket.off();
+			} catch (Exception ignored) {
+			}
+			socket = null;
 		}
-		socket.off();
-		socket = null;
+	}
+
+	/**
+	 * Подключение к заданному серверу с заданным именем игрока (для LAN-коопа и локальных серверов)
+	 */
+	public static void connectTo(String url, String nickname) {
+		destroySocket();
+		serverUrl = url;
+		name = nickname;
+		connect();
 	}
 
 	/**
 	 * 刷新服务器地址
 	 */
 	public static void refreshServerUrl() {
-		if (!isDesktop() || !isDebug()) {
-			NetConfig.refreshConfig();
-			serverUrl = NetConfig.config.getString("serverUrl");
+		if (serverUrl == null || serverUrl.isEmpty()) {
+			serverUrl = "http://127.0.0.1:32814/spdnet";
 		}
 	}
 
 	public static boolean isConnected() {
-		return getSocket().connected();
+		return socket != null && socket.connected();
 	}
 
 	/**
@@ -123,7 +153,6 @@ public class Net {
 	}
 
 	public static void setServerUrl(String serverUrl) {
-		if (isDebug()) return;
 		Net.serverUrl = serverUrl;
 	}
 }

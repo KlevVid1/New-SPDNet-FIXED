@@ -217,27 +217,37 @@ public class Dungeon {
 
 	//we initialize the seed separately so that things like interlevelscene can access it early
 	public static void initSeed(){
-		// 种子设置
-		// TODO 等GUI实现之后来这里更改种子逻辑 目前默认使用服务器给与的第一个种子
-		if (NetInProgress.mode == Mode.IRONMAN) {
-			seed = DungeonSeed.randomSeed();
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			if (NetInProgress.mode == Mode.IRONMAN) {
+				seed = DungeonSeed.randomSeed();
+			} else if (NetInProgress.isDailyChallenge()) {
+				customSeedText = NetInProgress.seedName != null ? NetInProgress.seedName : "";
+				seed = NetInProgress.seed;
+			} else if (NetInProgress.seed != 0L) {
+				customSeedText = NetInProgress.seedName != null ? NetInProgress.seedName : "";
+				seed = NetInProgress.seed;
+			} else if (!SPDSettings.customSeed().isEmpty()){
+				customSeedText = SPDSettings.customSeed();
+				seed = DungeonSeed.convertFromText(customSeedText);
+			} else {
+				customSeedText = "";
+				seed = DungeonSeed.randomSeed();
+			}
 		} else {
-			customSeedText = NetInProgress.seedName;
-			seed = NetInProgress.seed;
+			if (daily) {
+				//Ensures that daily seeds are not in the range of user-enterable seeds
+				seed = SPDSettings.lastDaily() + DungeonSeed.TOTAL_SEEDS;
+				DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
+				format.setTimeZone(TimeZone.getTimeZone("UTC"));
+				customSeedText = format.format(new Date(SPDSettings.lastDaily()));
+			} else if (!SPDSettings.customSeed().isEmpty()){
+				customSeedText = SPDSettings.customSeed();
+				seed = DungeonSeed.convertFromText(customSeedText);
+			} else {
+				customSeedText = "";
+				seed = DungeonSeed.randomSeed();
+			}
 		}
-//		if (daily) {
-//			//Ensures that daily seeds are not in the range of user-enterable seeds
-//			seed = SPDSettings.lastDaily() + DungeonSeed.TOTAL_SEEDS;
-//			DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
-//			format.setTimeZone(TimeZone.getTimeZone("UTC"));
-//			customSeedText = format.format(new Date(SPDSettings.lastDaily()));
-//		} else if (!SPDSettings.customSeed().isEmpty()){
-//			customSeedText = SPDSettings.customSeed();
-//			seed = DungeonSeed.convertFromText(customSeedText);
-//		} else {
-//			customSeedText = "";
-//			seed = DungeonSeed.randomSeed();
-//		}
 	}
 
 	public static void init() {
@@ -245,7 +255,7 @@ public class Dungeon {
 		initialVersion = version = Game.versionCode;
 		challenges = SPDSettings.challenges();
 		// SPDNet: 每日挑战模式下使用服务端指定的挑战
-		if (NetInProgress.isDailyChallenge()) {
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && NetInProgress.isDailyChallenge()) {
 			challenges = NetInProgress.dailyChallenges;
 		}
 		mobsToChampion = 1;

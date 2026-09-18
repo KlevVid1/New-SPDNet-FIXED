@@ -16,13 +16,21 @@ public class DailyChallengeConfirmWindow extends Window {
 
 		int y = MARGIN;
 
-		RenderedTextBlock title = PixelScene.renderTextBlock("警告", 9);
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		String titleStr = isRu ? "Внимание" : (isZh ? "警告" : "Warning");
+		RenderedTextBlock title = PixelScene.renderTextBlock(titleStr, 9);
 		title.hardlight(TITLE_COLOR);
 		title.setPos((WIDTH - title.width()) / 2, y);
 		add(title);
 		y += title.height() + MARGIN;
 
-		RenderedTextBlock message = PixelScene.renderTextBlock("你已经创建过该组别的挑战。\n\n将以普通模式游玩，成绩不会计入每日挑战排行榜。", 7);
+		String msgStr = isRu ? "Вы уже проходили эту категорию сегодня.\n\nИгра запустится в обычном режиме, результат не попадёт в ежедневную таблицу лидеров." :
+				(isZh ? "你已经创建过该组别的挑战。\n\n将以普通模式游玩，成绩不会计入每日挑战排行榜。" :
+						"You have already played this category today.\n\nIt will run in normal mode without leaderboard score submission.");
+		RenderedTextBlock message = PixelScene.renderTextBlock(msgStr, 7);
 		message.maxWidth(WIDTH - MARGIN * 2);
 		message.setPos(MARGIN, y);
 		add(message);
@@ -30,7 +38,8 @@ public class DailyChallengeConfirmWindow extends Window {
 
 		int buttonWidth = (WIDTH - MARGIN * 3) / 2;
 
-		StyledButton confirmBtn = new StyledButton(Chrome.Type.RED_BUTTON, "继续", 8) {
+		String contStr = isRu ? "Продолжить" : (isZh ? "继续" : "Continue");
+		StyledButton confirmBtn = new StyledButton(Chrome.Type.RED_BUTTON, contStr, 8) {
 			@Override
 			protected void onClick() {
 				onConfirm.run();
@@ -40,7 +49,8 @@ public class DailyChallengeConfirmWindow extends Window {
 		confirmBtn.setRect(MARGIN, y, buttonWidth, BUTTON_HEIGHT);
 		add(confirmBtn);
 
-		StyledButton cancelBtn = new StyledButton(Chrome.Type.RED_BUTTON, "取消", 8) {
+		String cancelStr = isRu ? "Отмена" : (isZh ? "取消" : "Cancel");
+		StyledButton cancelBtn = new StyledButton(Chrome.Type.RED_BUTTON, cancelStr, 8) {
 			@Override
 			protected void onClick() {
 				hide();

@@ -21,6 +21,7 @@ dependencies {
 
     // Websocket
     implementation 'io.socket:socket.io-client:2.1.2'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.7'
 
     // Fastjson 此为最后支持Android 6 的版本
     implementation 'com.alibaba:fastjson:1.1.77.android_noneautotype'

@@ -34,7 +34,13 @@ public class NetWndPlayerList extends NetWindow {
 
 		float y = 2;
 
-		RenderedTextBlock titleLbl = PixelScene.renderTextBlock("在线玩家", 7);
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+		String titleText = isRu ? "Игроки онлайн" : (isZh ? "在线玩家" : "Online Players");
+		String devMsg = isRu ? "В разработке..." : (isZh ? "正在开发，敬请期待" : "In development...");
+
+		RenderedTextBlock titleLbl = PixelScene.renderTextBlock(titleText, 7);
 		add(titleLbl);
 		titleLbl.setPos(VGAP / 2, y + 2);
 
@@ -44,7 +50,7 @@ public class NetWndPlayerList extends NetWindow {
 			@Override
 			protected void onClick() {
 				super.onClick();
-				NetWindow.dev("正在开发，敬请期待");
+				NetWindow.dev(devMsg);
 			}
 		};
 		add(chatBtn);
@@ -144,12 +150,19 @@ public class NetWndPlayerList extends NetWindow {
 		if (role == null) {
 			return 0xFFFFFF;
 		}
-		switch (role) {
+		switch (role.toUpperCase(java.util.Locale.ROOT)) {
 			case Role.ADMIN:
+			case "ADMIN":
+			case "АДМИНИСТРАТОР":
 				return 0x00FF00;
 			case Role.USER:
+			case "USER":
+			case "PLAYER":
+			case "ИГРОК":
 				return 0xFFFFFF;
 			case Role.BANNED:
+			case "BANNED":
+			case "ЗАБЛОКИРОВАН":
 				return 0xFF0000;
 			default:
 				return 0xFFFFFF;

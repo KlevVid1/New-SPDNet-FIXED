@@ -35,7 +35,12 @@ public class NetWndLeaderboardSelect extends Window {
 	public NetWndLeaderboardSelect() {
 		int currentHeight = 0;
 
-		title = PixelScene.renderTextBlock("排行榜设置", 9);
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		String titleStr = isRu ? "Настройки таблицы лидеров" : (isZh ? "排行榜设置" : "Leaderboard Settings");
+		title = PixelScene.renderTextBlock(titleStr, 9);
 		title.hardlight(TITLE_COLOR);
 		add(title);
 		currentHeight += 12;
@@ -47,7 +52,12 @@ public class NetWndLeaderboardSelect extends Window {
 		btnPlayerType = new RedButton(getPlayerTypeText()) {
 			@Override
 			protected void onClick() {
-				ShatteredPixelDungeon.scene().addToFront(new WndOptions("排行榜类型", "选择要查看的排行榜类型", "我的记录", "所有玩家") {
+				String optTitle = isRu ? "Тип таблицы" : (isZh ? "排行榜类型" : "Board Type");
+				String optDesc = isRu ? "Выберите тип таблицы лидеров" : (isZh ? "选择要查看的排行榜类型" : "Select leaderboard type");
+				String optMine = isRu ? "Мои рекорды" : (isZh ? "我的记录" : "My Records");
+				String optAll = isRu ? "Все игроки" : (isZh ? "所有玩家" : "All Players");
+
+				ShatteredPixelDungeon.scene().addToFront(new WndOptions(optTitle, optDesc, optMine, optAll) {
 					@Override
 					protected void onSelect(int index) {
 						if (index == 0) {
@@ -70,7 +80,11 @@ public class NetWndLeaderboardSelect extends Window {
 				if (NetRankingsScene.playerName != null) {
 					return;
 				}
-				ShatteredPixelDungeon.scene().addToFront(new WndTextInput("输入玩家名", null, NetRankingsScene.playerName, 30, false, "确定", "取消") {
+				String inputTitle = isRu ? "Поиск игрока" : (isZh ? "输入玩家名" : "Player Name");
+				String btnOk = isRu ? "OK" : (isZh ? "确定" : "OK");
+				String btnCancel = isRu ? "Отмена" : (isZh ? "取消" : "Cancel");
+
+				ShatteredPixelDungeon.scene().addToFront(new WndTextInput(inputTitle, null, NetRankingsScene.playerName, 30, false, btnOk, btnCancel) {
 					@Override
 					public void onSelect(boolean positive, String text) {
 						if (positive && text != null && !text.trim().isEmpty()) {
@@ -93,11 +107,13 @@ public class NetWndLeaderboardSelect extends Window {
 			@Override
 			protected void onClick() {
 				String[] options = new String[11];
-				options[0] = "不筛选";
+				options[0] = isRu ? "Все" : (isZh ? "不筛选" : "Any");
 				for (int i = 0; i <= 9; i++) {
-					options[i + 1] = i + "挑战";
+					options[i + 1] = i + (isRu ? " исп." : (isZh ? "挑战" : " chlng."));
 				}
-				ShatteredPixelDungeon.scene().addToFront(new WndOptions("挑战数量", "选择挑战数量筛选条件", options) {
+				String chTitle = isRu ? "Испытания" : (isZh ? "挑战数量" : "Challenges");
+				String chDesc = isRu ? "Фильтр по количеству испытаний" : (isZh ? "选择挑战数量筛选条件" : "Filter by challenge count");
+				ShatteredPixelDungeon.scene().addToFront(new WndOptions(chTitle, chDesc, options) {
 					@Override
 					protected void onSelect(int index) {
 						if (index == 0) {
@@ -113,7 +129,8 @@ public class NetWndLeaderboardSelect extends Window {
 		add(btnChallenge);
 		currentHeight += BTN_HEIGHT + GAP;
 
-		chkWinOnly = new CheckBox("只显示胜利") {
+		String winOnlyStr = isRu ? "Только победы" : (isZh ? "只显示胜利" : "Wins only");
+		chkWinOnly = new CheckBox(winOnlyStr) {
 			@Override
 			protected void onClick() {
 				super.onClick();
@@ -127,20 +144,23 @@ public class NetWndLeaderboardSelect extends Window {
 		btnGameMode = new RedButton(getGameModeText()) {
 			@Override
 			protected void onClick() {
-				// SPDNet: 添加铁人模式筛选选项
-				ShatteredPixelDungeon.scene().addToFront(new WndOptions("游戏模式", "选择游戏模式筛选条件", "不筛选", "标准模式", "铁人模式", "每日挑战") {
+				String modeTitle = isRu ? "Режим игры" : (isZh ? "游戏模式" : "Game Mode");
+				String modeDesc = isRu ? "Фильтр по режиму игры" : (isZh ? "选择游戏模式筛选条件" : "Filter by game mode");
+				String optAny = isRu ? "Все" : (isZh ? "不筛选" : "Any");
+				String optFun = isRu ? "Кооператив" : (isZh ? "标准模式" : "Standard");
+				String optIron = isRu ? "Железный человек" : (isZh ? "铁人模式" : "Ironman");
+				String optDaily = isRu ? "Ежедневное испытание" : (isZh ? "每日挑战" : "Daily Challenge");
+
+				ShatteredPixelDungeon.scene().addToFront(new WndOptions(modeTitle, modeDesc, optAny, optFun, optIron, optDaily) {
 					@Override
 					protected void onSelect(int index) {
 						if (index == 0) {
 							NetRankingsScene.gameMode = null;
 						} else if (index == 1) {
-							// 标准模式对应 FUN
 							NetRankingsScene.gameMode = "FUN";
 						} else if (index == 2) {
-							// 铁人模式对应 IRONMAN
 							NetRankingsScene.gameMode = "IRONMAN";
 						} else if (index == 3) {
-							// 每日挑战
 							NetRankingsScene.gameMode = "DAILY";
 						}
 						btnGameMode.text(getGameModeText());
@@ -151,8 +171,8 @@ public class NetWndLeaderboardSelect extends Window {
 		add(btnGameMode);
 		currentHeight += BTN_HEIGHT + GAP;
 
-		// SPDNet: 添加只显示被封禁玩家选项
-		chkBannedOnly = new CheckBox("只显示被封禁玩家") {
+		String bannedOnlyStr = isRu ? "Только заблокированные" : (isZh ? "只显示被封禁玩家" : "Banned only");
+		chkBannedOnly = new CheckBox(bannedOnlyStr) {
 			@Override
 			protected void onClick() {
 				super.onClick();
@@ -170,7 +190,13 @@ public class NetWndLeaderboardSelect extends Window {
 		btnSortCriteria = new RedButton(getSortCriteriaText()) {
 			@Override
 			protected void onClick() {
-				ShatteredPixelDungeon.scene().addToFront(new WndOptions("排序方式", "选择排序方式", "最近通关", "分数最高", "通关时间最短") {
+				String sortTitle = isRu ? "Сортировка" : (isZh ? "排序方式" : "Sort By");
+				String sortDesc = isRu ? "Выберите порядок сортировки" : (isZh ? "选择排序方式" : "Select sorting order");
+				String optRecent = isRu ? "Недавние" : (isZh ? "最近通关" : "Most Recent");
+				String optScore = isRu ? "По очкам" : (isZh ? "分数最高" : "Highest Score");
+				String optTime = isRu ? "По времени" : (isZh ? "通关时间最短" : "Fastest Time");
+
+				ShatteredPixelDungeon.scene().addToFront(new WndOptions(sortTitle, sortDesc, optRecent, optScore, optTime) {
 					@Override
 					protected void onSelect(int index) {
 						switch (index) {
@@ -197,16 +223,28 @@ public class NetWndLeaderboardSelect extends Window {
 	}
 
 	private String getPlayerTypeText() {
-		return NetRankingsScene.playerName == null ? "排行榜: 所有玩家" : "排行榜: 我的记录";
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		if (NetRankingsScene.playerName == null) {
+			return isRu ? "Таблица: Все игроки" : (isZh ? "排行榜: 所有玩家" : "Board: All Players");
+		} else {
+			return isRu ? "Таблица: Мои рекорды" : (isZh ? "排行榜: 我的记录" : "Board: My Records");
+		}
 	}
 
 	private String getPlayerNameText() {
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 		if (NetRankingsScene.playerName == null) {
-			return "搜索玩家: 点击输入";
+			return isRu ? "Поиск игрока: Ввести" : (isZh ? "搜索玩家: 点击输入" : "Search player: Tap to enter");
 		} else if (NetRankingsScene.playerName.equals(Net.name)) {
-			return "当前: 我 (" + Net.name + ")";
+			return isRu ? "Игрок: Я (" + Net.name + ")" : (isZh ? "当前: 我 (" + Net.name + ")" : "Player: Me (" + Net.name + ")");
 		} else {
-			return "当前: " + NetRankingsScene.playerName;
+			return isRu ? "Игрок: " + NetRankingsScene.playerName : (isZh ? "当前: " + NetRankingsScene.playerName : "Player: " + NetRankingsScene.playerName);
 		}
 	}
 
@@ -216,37 +254,49 @@ public class NetWndLeaderboardSelect extends Window {
 	}
 
 	private String getChallengeText() {
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 		if (NetRankingsScene.challengeCount == null) {
-			return "挑战数量: 不筛选";
+			return isRu ? "Испытания: Все" : (isZh ? "挑战数量: 不筛选" : "Challenges: Any");
 		} else {
-			return "挑战数量: " + NetRankingsScene.challengeCount + "挑战";
+			return isRu ? ("Испытания: " + NetRankingsScene.challengeCount + " исп.") :
+					(isZh ? ("挑战数量: " + NetRankingsScene.challengeCount + "挑战") :
+							("Challenges: " + NetRankingsScene.challengeCount));
 		}
 	}
 
 	private String getGameModeText() {
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 		if (NetRankingsScene.gameMode == null) {
-			return "游戏模式: 不筛选";
+			return isRu ? "Режим: Все" : (isZh ? "游戏模式: 不筛选" : "Mode: Any");
 		} else if (NetRankingsScene.gameMode.equals("FUN")) {
-			// SPDNet: 标准模式显示
-			return "游戏模式: 标准模式";
+			return isRu ? "Режим: Кооператив" : (isZh ? "游戏模式: 标准模式" : "Mode: Standard");
 		} else if (NetRankingsScene.gameMode.equals("IRONMAN")) {
-			// SPDNet: 铁人模式显示
-			return "游戏模式: 铁人模式";
+			return isRu ? "Режим: Железный человек" : (isZh ? "游戏模式: 铁人模式" : "Mode: Ironman");
 		} else if (NetRankingsScene.gameMode.equals("DAILY")) {
-			return "游戏模式: 每日挑战";
+			return isRu ? "Режим: Ежедневное испытание" : (isZh ? "游戏模式: 每日挑战" : "Mode: Daily Challenge");
 		} else {
 			Mode mode = Mode.valueOf(NetRankingsScene.gameMode);
-			return "游戏模式: " + mode.getName();
+			return isRu ? ("Режим: " + mode.getName()) : (isZh ? ("游戏模式: " + mode.getName()) : ("Mode: " + mode.getName()));
 		}
 	}
 
 	private String getSortCriteriaText() {
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 		if (NetRankingsScene.sortCriteria == null || NetRankingsScene.sortCriteria.equals("id")) {
-			return "排序: 最近通关";
+			return isRu ? "Сортировка: Недавние" : (isZh ? "排序: 最近通关" : "Sort: Most Recent");
 		} else if (NetRankingsScene.sortCriteria.equals("score")) {
-			return "排序: 分数最高";
+			return isRu ? "Сортировка: По очкам" : (isZh ? "排序: 分数最高" : "Sort: Highest Score");
 		} else {
-			return "排序: 通关时间最短";
+			return isRu ? "Сортировка: По времени" : (isZh ? "排序: 通关时间最短" : "Sort: Fastest Time");
 		}
 	}
 

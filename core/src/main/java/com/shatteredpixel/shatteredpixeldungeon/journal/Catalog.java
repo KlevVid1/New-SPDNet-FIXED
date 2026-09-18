@@ -319,6 +319,7 @@ public enum Catalog {
 		for (Catalog cat : values()) {
 			if (cat.seen.containsKey(cls) && !cat.seen.get(cls)) {
 				cat.seen.put(cls, true);
+				Journal.saveNeeded = true;
 				// SPDNet: 云端模式下发送更新到服务器
 				Journal.sendCatalogUpdate(cat.name(), cls.getName(), true, useCount(cls));
 			}
@@ -350,6 +351,7 @@ public enum Catalog {
 				if (cat.useCount.get(cls) < -1_000_000_000){ //to catch cases of overflow
 					cat.useCount.put(cls, Integer.MAX_VALUE);
 				}
+				Journal.saveNeeded = true;
 				// SPDNet: 云端模式下发送更新到服务器
 				Journal.sendCatalogUpdate(cat.name(), cls.getName(), cat.seen.containsKey(cls) && cat.seen.get(cls), cat.useCount.get(cls));
 			}

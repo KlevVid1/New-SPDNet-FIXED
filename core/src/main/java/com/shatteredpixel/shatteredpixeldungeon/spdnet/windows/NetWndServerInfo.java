@@ -3,6 +3,7 @@ package com.shatteredpixel.shatteredpixeldungeon.spdnet.windows;
 import static com.watabou.utils.DeviceCompat.isDebug;
 import static com.watabou.utils.DeviceCompat.isDesktop;
 
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.ui.BlueButton;
@@ -46,7 +47,8 @@ public class NetWndServerInfo extends NetWindow {
 
 
 		if (isDesktop() && isDebug()) {
-			host = PixelScene.renderTextBlock("服务器地址(调试)" + "\n" + Net.getServerUrl(), 7);
+			String dbgLabel = Messages.lang() == Languages.RUSSIAN ? "Адрес сервера (отладка)" : (Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD ? "服务器地址(调试)" : "Server address (debug)");
+			host = PixelScene.renderTextBlock(dbgLabel + "\n" + Net.getServerUrl(), 7);
 		} else {
 			host = PixelScene.renderTextBlock(Messages.get(this, "server_address")+"\n" + Net.getServerUrl(), 9);
 		}

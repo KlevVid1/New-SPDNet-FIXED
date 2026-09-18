@@ -98,7 +98,12 @@ public class NetRankingsScene extends PixelScene {
 
 		Rankings.INSTANCE.load();
 
-		title = new IconTitle( Icons.RANKINGS.get(), "当前显示: 总排行榜");
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		String titleStr = isRu ? "Таблица: Общий рейтинг" : (isZh ? "当前显示: 总排行榜" : "Board: Overall Rankings");
+		title = new IconTitle( Icons.RANKINGS.get(), titleStr);
 		title.setSize(200, 0);
 		title.setPos(
 				insets.left + (w - title.reqWidth()) / 2f,
@@ -107,7 +112,8 @@ public class NetRankingsScene extends PixelScene {
 		align(title);
 		add(title);
 
-		select = PixelScene.renderTextBlock("当前筛选: 无", 9);
+		String filterNone = isRu ? "Фильтры: Нет" : (isZh ? "当前筛选: 无" : "Filter: None");
+		select = PixelScene.renderTextBlock(filterNone, 9);
 		select.hardlight(Window.TITLE_COLOR);
 		select.setPos(
 				insets.left + (w - select.width()) / 2f,
@@ -116,7 +122,10 @@ public class NetRankingsScene extends PixelScene {
 		align(select);
 		add(select);
 
-		label = PixelScene.renderTextBlock("显示第" + currentPage + "页 共有" + totalPages + "页 共有" + totalElements + "条记录", 8);
+		String pageStr = isRu ? ("Стр. " + currentPage + " из " + totalPages + " (Записей: " + totalElements + ")") :
+				(isZh ? ("显示第" + currentPage + "页 共有" + totalPages + "页 共有" + totalElements + "条记录") :
+						("Page " + currentPage + " of " + totalPages + " (" + totalElements + " records)"));
+		label = PixelScene.renderTextBlock(pageStr, 8);
 		label.hardlight(0xCCCCCC);
 		label.setHightlighting(true, Window.SHPX_COLOR);
 		label.setPos(
@@ -196,10 +205,14 @@ public class NetRankingsScene extends PixelScene {
 		int h = Camera.main.height;
 		RectF insets = getCommonInsets();
 
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 		if (playerName == null) {
-			title.label("当前显示: 总排行榜");
+			title.label(isRu ? "Таблица: Общий рейтинг" : (isZh ? "当前显示: 总排行榜" : "Board: Overall Rankings"));
 		} else {
-			title.label("当前显示: " + playerName + " 的排行榜");
+			title.label(isRu ? ("Таблица: Рекорды " + playerName) : (isZh ? ("当前显示: " + playerName + " 的排行榜") : ("Board: " + playerName + "'s Records")));
 		}
 		title.setPos(
 				(w - title.reqWidth()) / 2f,
@@ -207,10 +220,10 @@ public class NetRankingsScene extends PixelScene {
 		);
 		ArrayList<String> selects = new ArrayList<>();
 		if (!(challengeCount == null)) {
-			selects.add(challengeCount + "挑");
+			selects.add(challengeCount + (isRu ? " исп." : (isZh ? "挑" : " chlng.")));
 		}
 		if (!(winOnly == null)) {
-			selects.add(winOnly ? "胜利" : "未胜利");
+			selects.add(winOnly ? (isRu ? "Победа" : (isZh ? "胜利" : "Win")) : (isRu ? "Поражение" : (isZh ? "未胜利" : "Defeat")));
 		}
 		if (!(gameMode == null)) {
 			Mode mode = Mode.valueOf(gameMode);
@@ -218,18 +231,18 @@ public class NetRankingsScene extends PixelScene {
 		}
 		// SPDNet: 显示是否只显示被封禁玩家
 		if (bannedOnly != null && bannedOnly) {
-			selects.add("仅封禁");
+			selects.add(isRu ? "Заблокированные" : (isZh ? "仅封禁" : "Banned only"));
 		}
 		String selectText = "";
 		if (selects.isEmpty()) {
-			selectText = "无";
+			selectText = isRu ? "Нет" : (isZh ? "无" : "None");
 		} else {
 			for (String text : selects) {
 				selectText = selectText + text + ", ";
 			}
 			selectText = selectText.substring(0, selectText.length() - 2);
 		}
-		select.text("当前筛选: " + selectText);
+		select.text((isRu ? "Фильтры: " : (isZh ? "当前筛选: " : "Filter: ")) + selectText);
 		select.setPos(
 				(w - select.width()) / 2f,
 				title.bottom() + 4
@@ -266,9 +279,13 @@ public class NetRankingsScene extends PixelScene {
 				pos++;
 			}
 
-			label.text("显示第" + currentPage + "页 共有" + totalPages + "页 共有" + totalElements + "条记录");
+			String pageStr = isRu ? ("Стр. " + currentPage + " из " + totalPages + " (Записей: " + totalElements + ")") :
+					(isZh ? ("显示第" + currentPage + "页 共有" + totalPages + "页 共有" + totalElements + "条记录") :
+							("Page " + currentPage + " of " + totalPages + " (" + totalElements + " records)"));
+			label.text(pageStr);
 		} else {
-			noRec = PixelScene.renderTextBlock("没找到记录", 8);
+			String noRecStr = isRu ? "Записей не найдено" : (isZh ? "没找到记录" : "No records found");
+			noRec = PixelScene.renderTextBlock(noRecStr, 8);
 			noRec.hardlight(0xCCCCCC);
 			noRec.setPos(
 					insets.left + (w - noRec.width()) / 2,

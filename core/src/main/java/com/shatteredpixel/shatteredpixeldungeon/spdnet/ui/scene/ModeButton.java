@@ -25,12 +25,22 @@ public class ModeButton extends StyledButton {
 	}
 
 	private static String getDailySuffix(int groupIndex) {
-		if (groupIndex == 0) {
-			return "新手";
-		} else if (groupIndex == 1) {
-			return "高手";
-		} else if (groupIndex == 2) {
-			return "大师";
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		if (isZh) {
+			if (groupIndex == 0) return "新手";
+			if (groupIndex == 1) return "高手";
+			if (groupIndex == 2) return "大师";
+		} else if (isRu) {
+			if (groupIndex == 0) return "Новичок";
+			if (groupIndex == 1) return "Опытный";
+			if (groupIndex == 2) return "Мастер";
+		} else {
+			if (groupIndex == 0) return "Beginner";
+			if (groupIndex == 1) return "Advanced";
+			if (groupIndex == 2) return "Master";
 		}
 		return "";
 	}

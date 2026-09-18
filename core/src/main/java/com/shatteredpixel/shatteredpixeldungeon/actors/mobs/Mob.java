@@ -125,6 +125,28 @@ public abstract class Mob extends Char {
 	
 	public int EXP = 1;
 	public int maxLvl = Hero.MAX_LEVEL-1;
+
+	// SPDNet Co-op: Сетевая синхронизация мобов
+	public int syncId = 0;
+	public boolean isNetRemote = false;
+
+	public static Mob findBySyncId(int syncId, int fallbackPos) {
+		if (Dungeon.level == null || Dungeon.level.mobs == null) return null;
+		if (syncId > 0) {
+			for (Mob m : Dungeon.level.mobs) {
+				if (m.syncId == syncId) return m;
+			}
+		}
+		for (Mob m : Dungeon.level.mobs) {
+			if (m.pos == fallbackPos) return m;
+		}
+		if (fallbackPos >= 0 && fallbackPos < Dungeon.level.length()) {
+			for (Mob m : Dungeon.level.mobs) {
+				if (Dungeon.level.adjacent(m.pos, fallbackPos)) return m;
+			}
+		}
+		return null;
+	}
 	
 	protected Char enemy;
 	protected int enemyID = -1; //used for save/restore
@@ -176,12 +198,15 @@ public abstract class Mob extends Char {
 		if (enemy != null) {
 			bundle.put(ENEMY_ID, enemy.id() );
 		}
+		bundle.put("sync_id", syncId);
 	}
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		
 		super.restoreFromBundle( bundle );
+
+		syncId = bundle.getInt("sync_id");
 
 		String state = bundle.getString( STATE );
 		if (state.equals( Sleeping.TAG )) {
@@ -225,6 +250,15 @@ public abstract class Mob extends Char {
 	protected boolean act() {
 		
 		super.act();
+
+		// SPDNet Co-op: Target-Driven Authority
+		// Если моб уже вплотную к удалённому напарнику (NetHero), урон рассчитывает его устройство.
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+				&& enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero
+				&& Dungeon.level != null && Dungeon.level.adjacent(pos, enemy.pos)) {
+			spend( TICK );
+			return true;
+		}
 		
 		boolean justAlerted = alerted;
 		alerted = false;
@@ -382,6 +416,15 @@ public abstract class Mob extends Char {
 				if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
 					enemies.add(Dungeon.hero);
 				}
+
+				// SPDNet Co-op: также проверяем всех игроков-напарников на этом этаже!
+				if (Dungeon.level != null && Dungeon.level.players != null) {
+					for (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero partner : Dungeon.level.players) {
+						if (partner != null && partner.isAlive() && fieldOfView[partner.pos] && partner.invisible <= 0) {
+							enemies.add(partner);
+						}
+					}
+				}
 				
 			}
 
@@ -419,7 +462,7 @@ public abstract class Mob extends Char {
 					} else if ((canAttack(curr) && !canAttack(closest))
 							|| (currDist < closestDist)){
 						closest = curr;
-					} else if ( curr == Dungeon.hero &&
+					} else if ( curr instanceof Hero &&
 							(currDist == closestDist) || (canAttack(curr) && canAttack(closest))){
 						closest = curr;
 					}
@@ -824,6 +867,21 @@ public abstract class Mob extends Char {
 		}
 		
 		super.damage( dmg, src );
+
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDamage(
+					Dungeon.depth, syncId, pos, dmg, HP, com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.name);
+		}
+	}
+
+	@Override
+	public void move( int step, boolean travelling ) {
+		int from = pos;
+		super.move( step, travelling );
+		if (from != step && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobMove(
+					Dungeon.depth, syncId, from, step );
+		}
 	}
 	
 	
@@ -874,6 +932,9 @@ public abstract class Mob extends Char {
 	
 	@Override
 	public void die( Object cause ) {
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDie(Dungeon.depth, syncId, pos);
+		}
 
 		if (cause == Chasm.class){
 			//50% chance to round up, 50% to round down
@@ -948,6 +1009,7 @@ public abstract class Mob extends Char {
 	}
 	
 	public void rollToDropLoot(){
+		if (isNetRemote) return;
 		if (Dungeon.hero.lvl > maxLvl + 2) return;
 
 		MasterThievesArmband.StolenTracker stolen = buff(MasterThievesArmband.StolenTracker.class);

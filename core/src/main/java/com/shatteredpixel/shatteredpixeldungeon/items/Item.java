@@ -138,7 +138,8 @@ public class Item implements Bundlable {
 	public void doDrop( Hero hero ) {
 		hero.spendAndNext(TIME_TO_DROP);
 		int pos = hero.pos;
-		Dungeon.level.drop(detachAll(hero.belongings.backpack), pos).sprite.drop(pos);
+		Item dropped = detachAll(hero.belongings.backpack);
+		Dungeon.level.drop(dropped, pos).sprite.drop(pos);
 	}
 
 	//resets an item's properties, to ensure consistency between runs

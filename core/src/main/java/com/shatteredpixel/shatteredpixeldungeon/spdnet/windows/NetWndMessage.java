@@ -18,7 +18,10 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.spdnet.windows;
 
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.ui.BlueButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.windows.IconTitle;
 import com.watabou.noosa.Image;
@@ -78,13 +81,33 @@ public class NetWndMessage extends NetWindow {
 		this.message.setPos(0, pos);
 		add(this.message);
 
-		pos = this.message.bottom() + 2 * MARGIN;
+		pos = this.message.bottom() + 4 * MARGIN;
+
+		boolean isRu = Messages.lang() == Languages.RUSSIAN;
+		boolean isZh = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
+		String okLabel = isRu ? "OK" : (isZh ? "好的" : "OK");
+		BlueButton okBtn = new BlueButton(okLabel) {
+			@Override
+			protected void onClick() {
+				super.onClick();
+				hide();
+			}
+		};
+		okBtn.setRect((width - 44) / 2f, pos, 44, 16);
+		add(okBtn);
+
+		pos = okBtn.bottom() + 2 * MARGIN;
 
 		resize(width, (int) (pos - MARGIN));
 	}
 
 	public void setMessage(String message) {
 		this.message.text(message);
+	}
+
+	@Override
+	public void onBackPressed() {
+		hide();
 	}
 
 	protected boolean enabled(int index) {

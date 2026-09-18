@@ -10,10 +10,17 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndChallenges;
 
 public class ChallengeButton extends StyledButton {
 	public ChallengeButton() {
-		super(Chrome.Type.WINDOW, "挑战未开启", 9);
+		super(Chrome.Type.WINDOW, getDisabledText(), 9);
 		icon(Icons.get(Icons.CHALLENGE_GREY));
 		width = 120;
 		height = 20;
+	}
+
+	private static String getDisabledText() {
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+		return isRu ? "Без испытаний" : (isZh ? "挑战未开启" : "No challenges");
 	}
 
 	@Override
@@ -25,10 +32,14 @@ public class ChallengeButton extends StyledButton {
 	public void update() {
 		super.update();
 		if (SPDSettings.challenges() > 0) {
-			text("当前挑战数量: " + SPDUtils.activeChallenges(SPDSettings.challenges()));
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+			String prefix = isRu ? "Испытаний: " : (isZh ? "当前挑战数量: " : "Challenges: ");
+			text(prefix + SPDUtils.activeChallenges(SPDSettings.challenges()));
 			icon(Icons.get(Icons.CHALLENGE_COLOR));
 		} else {
-			text("挑战未开启");
+			text(getDisabledText());
 			icon(Icons.get(Icons.CHALLENGE_GREY));
 		}
 	}

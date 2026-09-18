@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Journal;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.Mode;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.ui.NetButton;
@@ -378,11 +379,20 @@ public class StartScene extends PixelScene {
 				GamesInProgress.curSlot = slot;
 				ShatteredPixelDungeon.switchScene(HeroSelectScene.class);
 			} else {
-				if (Net.seeds.containsValue(seed)) {
+				if (!Net.isConnected() || Net.seeds.containsValue(seed)) {
 					ShatteredPixelDungeon.scene().add(new WndGameInProgress(slot));
 				} else {
+					boolean isRu = Messages.lang() == Languages.RUSSIAN;
+					boolean isZh = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
+					String seedTitle = isRu ? "Устаревший сид" : (isZh ? "过时的种子" : "Outdated seed");
+					String btnCont = isRu ? "Продолжить" : (isZh ? "继续游玩" : "Continue");
+					String btnCancel = isRu ? "Отмена" : (isZh ? "取消" : "Cancel");
+
 					if (mode == Mode.FUN) {
-						ShatteredPixelDungeon.scene().add(new WndOptions("过时的种子", "这个种子已经不是服务器的默认种子了, 你可以继续游玩, 但是你很难再见到其他玩家", "继续游玩", "取消") {
+						String seedDesc = isRu ? "Этот сид больше не используется сервером. Вы можете продолжить игру, но вряд ли встретите других игроков." :
+								(isZh ? "这个种子已经不是服务器的默认种子了, 你可以继续游玩, 但是你很难再见到其他玩家" :
+										"This seed is no longer the server default. You can continue, but you might not see other players.");
+						ShatteredPixelDungeon.scene().add(new WndOptions(seedTitle, seedDesc, btnCont, btnCancel) {
 							@Override
 							protected void onSelect(int index) {
 								if (index == 0) {
@@ -395,7 +405,10 @@ public class StartScene extends PixelScene {
 					} else if (mode == Mode.IRONMAN) {
 						ShatteredPixelDungeon.scene().add(new WndGameInProgress(slot));
 					} else if (mode == Mode.DAILY) {
-						ShatteredPixelDungeon.scene().add(new WndOptions("过时的种子", "这已经是以前的每日挑战了, 你可以继续游玩, 但是你的记录不会被上传", "继续游玩", "取消") {
+						String dailyDesc = isRu ? "Это предыдущее ежедневное испытание. Вы можете продолжить игру, но результат не будет отправлен в таблицу лидеров." :
+								(isZh ? "这已经是以前的每日挑战了, 你可以继续游玩, 但是你的记录不会被上传" :
+										"This is a previous daily challenge. You can continue, but your score will not be recorded.");
+						ShatteredPixelDungeon.scene().add(new WndOptions(seedTitle, dailyDesc, btnCont, btnCancel) {
 							@Override
 							protected void onSelect(int index) {
 								if (index == 0) {
@@ -413,7 +426,7 @@ public class StartScene extends PixelScene {
 		@Override
 		public void update() {
 			super.update();
-			if (mode == null) {
+			if (!Net.isConnected() || mode == null) {
 				return;
 			}
 			if (Net.seeds.containsValue(seed)){

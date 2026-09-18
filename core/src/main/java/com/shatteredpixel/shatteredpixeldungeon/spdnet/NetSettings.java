@@ -30,6 +30,41 @@ public class NetSettings {
 		return !getName().isEmpty() && !getPassword().isEmpty();
 	}
 
+	public static final String KEY_LAN_NAME = "net_lan_name";
+	public static final String KEY_LAN_HOST_IP = "net_lan_host_ip";
+	public static final String KEY_LAN_PORT = "net_lan_port";
+
+	public static void setLanName(String value) {
+		put(KEY_LAN_NAME, value);
+	}
+
+	public static String getLanName() {
+		String lanName = getString(KEY_LAN_NAME, "");
+		if (lanName.isEmpty()) {
+			lanName = getName();
+		}
+		if (lanName.isEmpty()) {
+			lanName = "Player";
+		}
+		return lanName;
+	}
+
+	public static void setLanHostIp(String value) {
+		put(KEY_LAN_HOST_IP, value);
+	}
+
+	public static String getLanHostIp() {
+		return getString(KEY_LAN_HOST_IP, "192.168.43.1");
+	}
+
+	public static void setLanPort(int value) {
+		put(KEY_LAN_PORT, value);
+	}
+
+	public static int getLanPort() {
+		return com.watabou.utils.GameSettings.getInt(KEY_LAN_PORT, 32814);
+	}
+
 	public static void clearCredentials() {
 		put(KEY_AUTH_NAME, "");
 		put(KEY_AUTH_PASSWORD, "");

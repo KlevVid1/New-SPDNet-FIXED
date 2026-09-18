@@ -98,8 +98,15 @@ public class NetWndLeaveNote extends NetWindow {
 			title = new IconTitle(target.icon, target.name);
 			add(title);
 
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 			hint = PixelScene.renderTextBlock(6);
-			hint.text("给" + target.name + " 留言");
+			String hintStr = isRu ? ("Оставить заметку для " + target.name) :
+					(isZh ? ("给" + target.name + " 留言") :
+							("Leave a note for " + target.name));
+			hint.text(hintStr);
 			hint.hardlight(Color.WHITE.toIntBits());
 			add(hint);
 
@@ -133,7 +140,8 @@ public class NetWndLeaveNote extends NetWindow {
 			};
 			add(inputClickArea);
 
-			send = new BlueButton("发送") {
+			String sendStr = isRu ? "Отправить" : (isZh ? "发送" : "Send");
+			send = new BlueButton(sendStr) {
 				@Override
 				protected void onPointerDown() {
 					super.onPointerDown();
@@ -153,7 +161,8 @@ public class NetWndLeaveNote extends NetWindow {
 			};
 			add(send);
 
-			cancel = new BlueButton("取消") {
+			String cancelStr = isRu ? "Отмена" : (isZh ? "取消" : "Cancel");
+			cancel = new BlueButton(cancelStr) {
 				@Override
 				protected void onPointerDown() {
 					super.onPointerDown();

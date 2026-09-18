@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.HeroSelectScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.InterlevelScene;
@@ -113,6 +114,18 @@ public class WndGameInProgress extends Window {
 		} else {
 			statSlot( Messages.get(this, "dungeon_seed"), DungeonSeed.convertToCode(info.seed) );
 		}
+
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			boolean isRu = Messages.lang() == Languages.RUSSIAN;
+			if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+				statSlot(isRu ? "Сетевой режим:" : "Network mode:", isRu ? "Хост LAN (сид синхронизируется)" : "LAN Host (seed will sync)");
+			} else if (com.shatteredpixel.shatteredpixeldungeon.spdnet.NetInProgress.seed != 0) {
+				boolean matches = info.seed == com.shatteredpixel.shatteredpixeldungeon.spdnet.NetInProgress.seed;
+				statSlot(isRu ? "Синхронизация LAN:" : "LAN sync:",
+						matches ? (isRu ? "Совпадает с хостом" : "Matches host") :
+								(isRu ? "Другой сид (не этот мир)" : "Different seed"));
+			}
+		}
 		
 		pos += GAP;
 		
@@ -120,12 +133,13 @@ public class WndGameInProgress extends Window {
 			@Override
 			protected void onClick() {
 				super.onClick();
-				// 禁止没连服务器的进游戏
-				if (!Net.isConnected()){
-					NetWindow.error(Messages.get(HeroSelectScene.class, "no_connection_title"), Messages.get(HeroSelectScene.class, "no_connection_desc"));
-					return;
-				}
 				GamesInProgress.curSlot = slot;
+				GamesInProgress.Info info = GamesInProgress.check(slot);
+				if (info != null && info.seed != 0) {
+					if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+						com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(info.seed);
+					}
+				}
 				
 				Dungeon.hero = null;
 				Dungeon.daily = Dungeon.dailyReplay = false;

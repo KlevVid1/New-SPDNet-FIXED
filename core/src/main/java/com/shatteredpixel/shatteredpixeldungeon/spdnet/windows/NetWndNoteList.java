@@ -74,7 +74,16 @@ public class NetWndNoteList extends NetWindow {
 
 		float y = 2;
 
-		RenderedTextBlock title = PixelScene.renderTextBlock("本格留言(" + NetNoteStore.notesAt(cell).size() + "条)", 7);
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
+		int noteCount = NetNoteStore.notesAt(cell).size();
+		String titleStr = isRu ? ("Заметки клетки (" + noteCount + ")") :
+				(isZh ? ("本格留言(" + noteCount + "条)") :
+						("Cell notes (" + noteCount + ")"));
+
+		RenderedTextBlock title = PixelScene.renderTextBlock(titleStr, 7);
 		title.hardlight(Color.WHITE.toIntBits());
 		add(title);
 		title.setPos(VGAP, y + 2);
@@ -141,25 +150,28 @@ public class NetWndNoteList extends NetWindow {
 			this.note = note;
 			boolean mine = NetNoteStore.isMine(note);
 
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 			icon = noteIcon(note);
 			if (icon == null) {
 				icon = WndInfoCell.cellImage(note.pos);
 			}
 
 			String msg = note.message == null ? "" : note.message;
-			// SPDNet: 第一行 = 发送者：留言内容（字号 6 小一号）。冒号前不再是对象名，
-			// 对象是什么在右侧"详情"按钮里查看；第二行留空给第一行换行备用。
-			String sender = mine ? "我" : note.author;
-			titleText = PixelScene.renderTextBlock(sender + (msg.isEmpty() ? "" : "： " + msg), 6);
+			String selfLabel = isRu ? "Вы" : (isZh ? "我" : "You");
+			String sender = mine ? selfLabel : note.author;
+			titleText = PixelScene.renderTextBlock(sender + (msg.isEmpty() ? "" : ": " + msg), 6);
 			titleText.maxWidth((int) (width - 45));
 
-			// SPDNet: 最后一行 = 赞数 + 时间合并显示，不再单独显示作者行
-			infoText = PixelScene.renderTextBlock("赞：" + note.likes + "　" + dateLabel(note), 5);
+			String likesPrefix = isRu ? "Лайки: " : (isZh ? "赞：" : "Likes: ");
+			infoText = PixelScene.renderTextBlock(likesPrefix + note.likes + "  " + dateLabel(note), 5);
 			infoText.maxWidth((int) (width - 45));
 			infoText.hardlight(Color.WHITE.toIntBits());
 
-			// SPDNet: "详情"按钮 → 复现游戏内放大镜查看该对象的 info 窗口
-			detail = new BlueButton("详情", 6) {
+			String detailLabel = isRu ? "Инфо" : (isZh ? "详情" : "Info");
+			detail = new BlueButton(detailLabel, 6) {
 				@Override
 				protected void onClick() {
 					showDetail(note);
@@ -239,10 +251,18 @@ public class NetWndNoteList extends NetWindow {
 		}
 
 		private String actionLabel() {
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 			if (NetNoteStore.isMine(note)) {
-				return "删";
+				return isRu ? "Удал." : (isZh ? "删" : "Del");
 			}
-			return NetNoteStore.isMyLiked(note.id) ? "消赞" : "赞";
+			if (NetNoteStore.isMyLiked(note.id)) {
+				return isRu ? "Отмена" : (isZh ? "消赞" : "Unlike");
+			} else {
+				return isRu ? "Лайк" : (isZh ? "赞" : "Like");
+			}
 		}
 	}
 
@@ -335,17 +355,21 @@ public class NetWndNoteList extends NetWindow {
 
 			java.time.LocalDateTime now = java.time.LocalDateTime.now();
 
+			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 			String pattern;
 			if (t.getYear() == now.getYear()
 					&& t.getMonth() == now.getMonth()
 					&& t.getDayOfMonth() == now.getDayOfMonth()) {
 				pattern = "HH:mm:ss";
 			} else if (t.getYear() == now.getYear() && t.getMonth() == now.getMonth()) {
-				pattern = "d日 HH:mm:ss";
+				pattern = isZh ? "d日 HH:mm:ss" : "dd.MM HH:mm:ss";
 			} else if (t.getYear() == now.getYear()) {
-				pattern = "M月d日 HH:mm:ss";
+				pattern = isZh ? "M月d日 HH:mm:ss" : "dd.MM HH:mm:ss";
 			} else {
-				pattern = "yy年M月d日 HH:mm:ss";
+				pattern = isZh ? "yy年M月d日 HH:mm:ss" : "dd.MM.yy HH:mm:ss";
 			}
 			return t.format(java.time.format.DateTimeFormatter.ofPattern(pattern));
 		} catch (Throwable e) {

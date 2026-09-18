@@ -52,7 +52,10 @@ public class NetPing {
 
 			@Override
 			public String prompt() {
-				return "选择要 ping 的目标所在格";
+				boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+				boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+						|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+				return isRu ? "Выберите клетку для метки" : (isZh ? "选择要 ping 的目标所在格" : "Select cell to ping");
 			}
 		});
 	}
@@ -62,13 +65,18 @@ public class NetPing {
 		if (cell < 0 || cell >= Dungeon.level.length()) {
 			return;
 		}
+		boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+		boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+				|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+
 		ArrayList<NetNoteTarget> targets = new ArrayList<>();
 		ArrayList<String> names = new ArrayList<>();
 
 		// 自己：该格为本机英雄所在的格 → 使 §7 的 self-ping 可达
 		if (Dungeon.hero.pos == cell) {
 			targets.add(playerTarget(cell, Dungeon.hero));
-			names.add(Messages.titleCase(Dungeon.hero.className()).toUpperCase(Locale.ENGLISH) + "（自己）");
+			String selfSuffix = isRu ? " (Вы)" : (isZh ? "（自己）" : " (Self)");
+			names.add(Messages.titleCase(Dungeon.hero.className()).toUpperCase(Locale.ENGLISH) + selfSuffix);
 		}
 
 		// 其他在线玩家
@@ -110,13 +118,17 @@ public class NetPing {
 		}
 
 		// 这块地板（非实体，只存坐标+文本）
-		targets.add(new NetNoteTarget(cell, "FLOOR", "这块地板", WndInfoCell.cellImage(cell), null, null));
-		names.add("这块地板");
+		String floorLabel = isRu ? "Пол" : (isZh ? "这块地板" : "Floor");
+		targets.add(new NetNoteTarget(cell, "FLOOR", floorLabel, WndInfoCell.cellImage(cell), null, null));
+		names.add(floorLabel);
+
+		String optTitle = isRu ? "Цель для заметки" : (isZh ? "选择要留言的对象" : "Select Target");
+		String optDesc = isRu ? "Выберите объект для создания заметки:" : (isZh ? "该格上有以下对象（选择后写下留言）" : "Choose an object to leave a note on:");
 
 		NetNoteTarget[] arr = targets.toArray(new NetNoteTarget[0]);
 		GameScene.show(new WndOptions(Icons.get(Icons.INFO),
-				"选择要留言的对象",
-				"该格上有以下对象（选择后写下留言）",
+				optTitle,
+				optDesc,
 				names.toArray(new String[0])) {
 			@Override
 			protected void onSelect(int index) {
