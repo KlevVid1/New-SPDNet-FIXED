@@ -47,3 +47,5 @@ Special thanks to:
 ## Note
 
 This is a fan-made multiplayer modification and is not officially affiliated with or endorsed by the original Shattered Pixel Dungeon developers.
+
+FIXED ONLY ANDROID VERSION!!!
