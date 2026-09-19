@@ -28,11 +28,14 @@ import com.watabou.utils.PointF;
 
 public class CellEmitter {
 
+	private static final Emitter DUMMY = new Emitter();
+
 	public static Emitter floor( int cell ) {
 
 		PointF p = DungeonTilemap.tileToWorld( cell );
 
 		Emitter emitter = GameScene.floorEmitter();
+		if (emitter == null) return DUMMY;
 		emitter.pos( p.x, p.y, DungeonTilemap.SIZE, DungeonTilemap.SIZE );
 
 		return emitter;
@@ -43,6 +46,7 @@ public class CellEmitter {
 		PointF p = DungeonTilemap.tileToWorld( cell );
 		
 		Emitter emitter = GameScene.emitter();
+		if (emitter == null) return DUMMY;
 		emitter.pos( p.x, p.y, DungeonTilemap.SIZE, DungeonTilemap.SIZE );
 		
 		return emitter;
@@ -53,6 +57,7 @@ public class CellEmitter {
 		PointF p = DungeonTilemap.tileToWorld( cell );
 		
 		Emitter emitter = GameScene.emitter();
+		if (emitter == null) return DUMMY;
 		emitter.pos( p.x + DungeonTilemap.SIZE / 2, p.y + DungeonTilemap.SIZE / 2 );
 		
 		return emitter;
@@ -63,6 +68,7 @@ public class CellEmitter {
 		PointF p = DungeonTilemap.tileToWorld( cell );
 		
 		Emitter emitter = GameScene.emitter();
+		if (emitter == null) return DUMMY;
 		emitter.pos( p.x, p.y + DungeonTilemap.SIZE, DungeonTilemap.SIZE, 0 );
 		
 		return emitter;

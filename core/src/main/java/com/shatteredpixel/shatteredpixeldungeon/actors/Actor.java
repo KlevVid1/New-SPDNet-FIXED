@@ -277,7 +277,10 @@ public abstract class Actor implements Bundlable {
 					try {
 						synchronized (((Char)acting).sprite) {
 							if (((Char)acting).sprite.isMoving) {
-								((Char) acting).sprite.wait();
+								((Char) acting).sprite.wait(500);
+								if (((Char)acting).sprite.isMoving) {
+									((Char)acting).sprite.isMoving = false;
+								}
 							}
 						}
 					} catch (InterruptedException e) {

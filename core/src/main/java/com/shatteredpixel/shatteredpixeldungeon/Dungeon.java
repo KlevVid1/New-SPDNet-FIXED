@@ -218,7 +218,21 @@ public class Dungeon {
 	//we initialize the seed separately so that things like interlevelscene can access it early
 	public static void initSeed(){
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
-			if (NetInProgress.mode == Mode.IRONMAN) {
+			if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+				long srvSeed = com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.getSeed();
+				if (srvSeed != 0L) {
+					seed = srvSeed;
+					customSeedText = "";
+				} else if (!SPDSettings.customSeed().isEmpty()){
+					customSeedText = SPDSettings.customSeed();
+					seed = DungeonSeed.convertFromText(customSeedText);
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(seed);
+				} else {
+					customSeedText = "";
+					seed = DungeonSeed.randomSeed();
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(seed);
+				}
+			} else if (NetInProgress.mode == Mode.IRONMAN) {
 				seed = DungeonSeed.randomSeed();
 			} else if (NetInProgress.isDailyChallenge()) {
 				customSeedText = NetInProgress.seedName != null ? NetInProgress.seedName : "";
@@ -226,6 +240,10 @@ public class Dungeon {
 			} else if (NetInProgress.seed != 0L) {
 				customSeedText = NetInProgress.seedName != null ? NetInProgress.seedName : "";
 				seed = NetInProgress.seed;
+			} else if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.seeds.containsKey("seedFUN")) {
+				seed = com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.seeds.get("seedFUN");
+				customSeedText = "seedFUN";
+				NetInProgress.seed = seed;
 			} else if (!SPDSettings.customSeed().isEmpty()){
 				customSeedText = SPDSettings.customSeed();
 				seed = DungeonSeed.convertFromText(customSeedText);

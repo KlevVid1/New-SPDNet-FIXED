@@ -630,6 +630,7 @@ public class InterlevelScene extends PixelScene {
 
 		if (Dungeon.hero == null) {
 			Mob.clearHeldAllies();
+			Dungeon.initSeed();
 			Dungeon.init();
 			GameLog.wipe();
 

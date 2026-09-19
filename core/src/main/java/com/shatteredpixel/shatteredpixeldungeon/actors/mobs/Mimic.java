@@ -211,7 +211,11 @@ public class Mimic extends Mob {
 
 	public void stopHiding(){
 		state = HUNTING;
+		alignment = Alignment.ENEMY;
 		if (sprite != null) sprite.idle();
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendChestOpen(Dungeon.depth, pos);
+		}
 		if (Actor.chars().contains(this) && Dungeon.level.heroFOV[pos]) {
 			enemy = Dungeon.hero;
 			target = Dungeon.hero.pos;
@@ -270,7 +274,11 @@ public class Mimic extends Mob {
 	
 	@Override
 	public void rollToDropLoot(){
-		
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+				&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+			return;
+		}
+		if (isNetRemote) return;
 		if (items != null) {
 			for (Item item : items) {
 				Dungeon.level.drop( item, pos ).sprite.drop();

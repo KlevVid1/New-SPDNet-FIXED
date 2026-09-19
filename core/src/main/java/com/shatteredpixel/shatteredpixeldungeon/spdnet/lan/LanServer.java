@@ -342,6 +342,15 @@ public class LanServer {
 						conn.getRemoteSocketAddress().getAddress().isLoopbackAddress());
 				if (isHost && c.getStatus() != null && c.getStatus().getSeed() != 0) {
 					updateSeed(c.getStatus().getSeed());
+				} else if (!isHost && c.getStatus() != null && c.getStatus().getSeed() != 0 && currentSeed != 0 && c.getStatus().getSeed() != currentSeed) {
+					String warnMsg = "ВНИМАНИЕ: Сид игрока " + session.name + " (" + DungeonSeed.convertToCode(c.getStatus().getSeed()) + ") не совпадает с миром хоста (" + DungeonSeed.convertToCode(currentSeed) + ")! Уровни будут разными. Начните новую игру!";
+					SChatMessage chatWarn = new SChatMessage("LanServer", warnMsg, String.valueOf(System.currentTimeMillis()));
+					emit(conn, Events.CHAT_MESSAGE.getName(), chatWarn);
+					WebSocket hostConn = nameToConn.get(hostPlayerName);
+					if (hostConn != null && hostConn.isOpen()) {
+						emit(hostConn, Events.CHAT_MESSAGE.getName(), chatWarn);
+					}
+					NLog.w("LanServer: Seed mismatch detected for " + session.name + ": " + c.getStatus().getSeed() + " vs " + currentSeed);
 				}
 				broadcast(Events.ENTER_DUNGEON.getName(), new SEnterDungeon(session.name, session.status, ""), conn);
 				sendNotesForSession(conn, session);

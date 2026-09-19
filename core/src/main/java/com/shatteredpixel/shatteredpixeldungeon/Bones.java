@@ -61,8 +61,8 @@ public class Bones {
 
 		branch = Dungeon.branch;
 
-		//daily runs do not interact with remains
-		if (Dungeon.daily) {
+		//daily runs and multiplayer runs do not interact with remains
+		if (Dungeon.daily || com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
 			depth = branch = -1;
 			return;
 		}
@@ -152,8 +152,8 @@ public class Bones {
 	}
 
 	public static ArrayList<Item> get() {
-		//daily runs do not interact with remains
-		if (Dungeon.daily){
+		//daily runs and multiplayer runs do not interact with remains
+		if (Dungeon.daily || com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()){
 			return null;
 		}
 

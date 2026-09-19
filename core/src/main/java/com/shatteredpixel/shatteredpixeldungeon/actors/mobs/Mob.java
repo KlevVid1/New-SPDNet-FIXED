@@ -251,11 +251,10 @@ public abstract class Mob extends Char {
 		
 		super.act();
 
-		// SPDNet Co-op: Target-Driven Authority
-		// Если моб уже вплотную к удалённому напарнику (NetHero), урон рассчитывает его устройство.
+		// SPDNet Co-op: On Client, the Host is the sole authority for mob AI and movement.
+		// Client mobs are animated puppets driven by packets from the Host.
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
-				&& enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero
-				&& Dungeon.level != null && Dungeon.level.adjacent(pos, enemy.pos)) {
+				&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
 			spend( TICK );
 			return true;
 		}
@@ -878,7 +877,9 @@ public abstract class Mob extends Char {
 	public void move( int step, boolean travelling ) {
 		int from = pos;
 		super.move( step, travelling );
-		if (from != step && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
+		if (from != step && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()
+				&& !isNetRemote && Dungeon.level != null) {
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobMove(
 					Dungeon.depth, syncId, from, step );
 		}
@@ -1009,6 +1010,10 @@ public abstract class Mob extends Char {
 	}
 	
 	public void rollToDropLoot(){
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+				&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+			return;
+		}
 		if (isNetRemote) return;
 		if (Dungeon.hero.lvl > maxLvl + 2) return;
 

@@ -831,6 +831,9 @@ public class GameScene extends PixelScene {
 			// 同步玩家列表
 			NetHero.syncWithCurrentLevel();
 			// 更新记录
+			if (lastEnterDepth == -1) {
+				GLog.p("Кооператив: сид подземелья [%s]", com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed.convertToCode(Dungeon.seed));
+			}
 			lastEnterDepth = Dungeon.depth;
 			lastEnterSeed = Dungeon.seed;
 		}
@@ -840,9 +843,7 @@ public class GameScene extends PixelScene {
 		
 		//tell the actor thread to finish, then wait for it to complete any actions it may be doing.
 		if (!waitForActorThread( 4500, true )){
-			Throwable t = new Throwable();
-			t.setStackTrace(actorThread.getStackTrace());
-			throw new RuntimeException("timeout waiting for actor thread! ", t);
+			endActorThread();
 		}
 
 		Emitter.freezeEmitters = false;

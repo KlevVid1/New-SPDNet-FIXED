@@ -10,6 +10,9 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -406,7 +409,11 @@ public class Handler {
 			Game.runOnRenderThread(() -> {
 				NetHero player1 = NetHero.getPlayerFromDungeon(playerMove.getName());
 				if (player1 != null) {
-					player1.move(playerMove.getPos(), false);
+					if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+						player1.move(playerMove.getPos(), false);
+					} else {
+						player1.pos = playerMove.getPos();
+					}
 				}
 			});
 		}
@@ -531,7 +538,10 @@ public class Handler {
 				if (Dungeon.level != null) {
 					Level.isRemoteDrop = true;
 					try {
-						Dungeon.level.drop(item, itemDrop.getPos()).sprite.drop(itemDrop.getPos());
+						Heap heap = Dungeon.level.drop(item, itemDrop.getPos());
+						if (heap != null && heap.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
+							heap.sprite.drop(itemDrop.getPos());
+						}
 					} finally {
 						Level.isRemoteDrop = false;
 					}
@@ -604,10 +614,16 @@ public class Handler {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
-			if (Dungeon.level != null && Dungeon.level.heaps != null) {
-				Heap heap = Dungeon.level.heaps.get(chestOpen.getPos());
-				if (heap != null && heap.type != Heap.Type.HEAP) {
-					heap.open(null);
+			if (Dungeon.level != null) {
+				if (Dungeon.level.heaps != null) {
+					Heap heap = Dungeon.level.heaps.get(chestOpen.getPos());
+					if (heap != null && heap.type != Heap.Type.HEAP) {
+						heap.open(null);
+					}
+				}
+				Char ch = Actor.findChar(chestOpen.getPos());
+				if (ch instanceof Mimic) {
+					((Mimic) ch).stopHiding();
 				}
 			}
 		});
@@ -625,14 +641,17 @@ public class Handler {
 			Mob mob = Mob.findBySyncId(mobDamage.getSyncId(), mobDamage.getPos());
 			if (mob != null && mob.isAlive()) {
 				mob.HP = mobDamage.getCurrentHP();
+				if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
+					((Mimic) mob).stopHiding();
+				}
 				// Выравнивание позиции при рассинхронизации клеток
 				if (mob.pos != mobDamage.getPos() && mobDamage.getPos() >= 0 && mobDamage.getPos() < Dungeon.level.length()) {
 					mob.pos = mobDamage.getPos();
-					if (mob.sprite != null) {
+					if (mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 						mob.sprite.place(mob.pos);
 					}
 				}
-				if (mob.sprite != null) {
+				if (mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 					mob.sprite.bloodBurstA(mob.sprite.center(), mobDamage.getDamage());
 					mob.sprite.showStatusWithIcon(CharSprite.NEGATIVE, Integer.toString(mobDamage.getDamage()), FloatingText.PHYS_DMG);
 				}
@@ -690,7 +709,7 @@ public class Handler {
 				try {
 					int from = mob.pos;
 					mob.move(mobMove.getToPos());
-					if (mob.sprite != null) {
+					if (mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 						mob.moveSprite(from, mob.pos);
 					}
 				} finally {
@@ -706,7 +725,10 @@ public class Handler {
 		}
 		Game.runOnRenderThread(() -> {
 			Mob mob = Mob.findBySyncId(mobAttack.getSyncId(), -1);
-			if (mob != null && mob.sprite != null) {
+			if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
+				((Mimic) mob).stopHiding();
+			}
+			if (mob != null && mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 				mob.sprite.attack(mobAttack.getTargetPos());
 			}
 			// Если удар направлен в этого игрока (Клиента) от моба, управляемого Хостом
@@ -738,11 +760,14 @@ public class Handler {
 					mob.pos = mobSpawn.getPos();
 					mob.HT = mobSpawn.getHt();
 					mob.HP = mobSpawn.getHp();
-					GameScene.add(mob);
-					NLog.i("handleMobSpawn: spawned " + mobSpawn.getMobClass() + " syncId=" + mob.syncId + " at " + mob.pos);
+					if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+						GameScene.add(mob);
+					} else if (Dungeon.level != null) {
+						Dungeon.level.mobs.add(mob);
+					}
 				}
 			} catch (Exception e) {
-				NLog.w("handleMobSpawn error: " + e.getMessage());
+				// silent
 			}
 		});
 	}

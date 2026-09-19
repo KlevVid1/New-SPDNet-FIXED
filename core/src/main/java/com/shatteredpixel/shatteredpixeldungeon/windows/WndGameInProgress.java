@@ -133,14 +133,38 @@ public class WndGameInProgress extends Window {
 			@Override
 			protected void onClick() {
 				super.onClick();
-				GamesInProgress.curSlot = slot;
+				final int selectedSlot = slot;
 				GamesInProgress.Info info = GamesInProgress.check(slot);
 				if (info != null && info.seed != 0) {
 					if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
 						com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(info.seed);
+					} else if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+						long hostSeed = com.shatteredpixel.shatteredpixeldungeon.spdnet.NetInProgress.seed;
+						if (hostSeed == 0 && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.seeds.containsKey("seedFUN")) {
+							hostSeed = com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.seeds.get("seedFUN");
+						}
+						if (hostSeed != 0 && info.seed != hostSeed) {
+							ShatteredPixelDungeon.scene().add(new WndOptions(Icons.get(Icons.WARNING),
+									"Несовпадение сида",
+									"Сид этого сохранения не совпадает с сидом хоста! Комнаты и мобы будут рассинхронизированы.\n\nПродолжить всё равно?",
+									Messages.get(WndGameInProgress.class, "erase_warn_yes"),
+									Messages.get(WndGameInProgress.class, "erase_warn_no") ) {
+								@Override
+								protected void onSelect( int index ) {
+									if (index == 0) {
+										resumeGame(selectedSlot);
+									}
+								}
+							});
+							return;
+						}
 					}
 				}
-				
+				resumeGame(selectedSlot);
+			}
+
+			private void resumeGame(int curSlot) {
+				GamesInProgress.curSlot = curSlot;
 				Dungeon.hero = null;
 				Dungeon.daily = Dungeon.dailyReplay = false;
 				ActionIndicator.clearAction();

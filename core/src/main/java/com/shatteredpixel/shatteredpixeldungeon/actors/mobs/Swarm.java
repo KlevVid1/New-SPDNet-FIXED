@@ -101,7 +101,12 @@ public class Swarm extends Mob {
 			}
 	
 			if (candidates.size() > 0) {
-				
+				if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+						&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+					// Client does not split locally in co-op: the Host will spawn the split swarm and send SMobSpawn
+					return super.defenseProc(enemy, damage);
+				}
+
 				Swarm clone = split();
 				clone.pos = Random.element( candidates );
 				clone.state = clone.HUNTING;

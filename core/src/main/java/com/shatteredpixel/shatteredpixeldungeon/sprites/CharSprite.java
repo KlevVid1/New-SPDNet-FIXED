@@ -166,6 +166,10 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	@Override
 	public void destroy() {
 		super.destroy();
+		synchronized (this) {
+			isMoving = false;
+			notifyAll();
+		}
 		if (ch != null && ch.sprite == this){
 			ch.sprite = null;
 		}
@@ -221,9 +225,12 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		
 		motion = new PosTweener( this, worldToCamera( to ), moveInterval );
 		motion.listener = this;
-		parent.add( motion );
-
-		isMoving = true;
+		if (parent != null) {
+			parent.add( motion );
+			isMoving = true;
+		} else {
+			place( to );
+		}
 		
 		if (visible && Dungeon.level.water[from] && !ch.flying) {
 			GameScene.ripple( from );
@@ -248,6 +255,10 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	public void interruptMotion() {
 		if (motion != null) {
 			motion.stop(false);
+		}
+		synchronized (this) {
+			isMoving = false;
+			notifyAll();
 		}
 	}
 	
