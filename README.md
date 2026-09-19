@@ -14,15 +14,7 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 
 ## Download
 
-The game is distributed through **GitHub Releases**:
-
-## Technical Stack
-
-### Client (Android/Desktop)
-- **Language**: Java
-- **JSON Library**: fastjson1 (Android 6-16 compatibility)
-- **Network**: Socket.IO client
-- 
+The game is distributed through **GitHub Releases**
 
 ## Credits
 
@@ -47,6 +39,8 @@ Special thanks to:
 ## Note
 
 This is a fan-made multiplayer modification and is not officially affiliated with or endorsed by the original Shattered Pixel Dungeon developers.
+
+NOW ALL CHANGES WILL BI COMMITED TO `master` BRANCH
 
 Version 1 and 1.1 based on game version 3.3.8.  
 Version 2 (indev) based on game version 4.0.0.  
