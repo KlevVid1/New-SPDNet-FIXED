@@ -274,10 +274,6 @@ public class Mimic extends Mob {
 	
 	@Override
 	public void rollToDropLoot(){
-		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
-				&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
-			return;
-		}
 		if (isNetRemote) return;
 		if (items != null) {
 			for (Item item : items) {

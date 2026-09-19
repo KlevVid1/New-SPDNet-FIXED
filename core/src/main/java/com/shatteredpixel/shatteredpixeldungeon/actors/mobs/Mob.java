@@ -285,10 +285,10 @@ public abstract class Mob extends Char {
 		
 		super.act();
 
-		// SPDNet Co-op: On Client, the Host is the sole authority for mob AI and movement.
-		// Client mobs are animated puppets driven by packets from the Host.
+		// SPDNet Co-op: Target-Driven Authority
+		// Если моб нацелен на удалённого напарника (NetHero), его действиями управляет устройство напарника.
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
-				&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+				&& enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero) {
 			spend( TICK );
 			return true;
 		}
@@ -781,7 +781,7 @@ public abstract class Mob extends Char {
 			}
 		}
 		if (from != step && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
-				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()
+				&& !(enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero)
 				&& !isNetRemote && Dungeon.level != null) {
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobMove(
 					Dungeon.depth, syncId, from, step, getClass().getName(), HP, HT );
@@ -806,6 +806,13 @@ public abstract class Mob extends Char {
 		
 		if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
 			sprite.attack( enemy.pos );
+			if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+					&& !isNetRemote && Dungeon.level != null && syncId > 0) {
+				String targetName = enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero ?
+						((com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero) enemy).name : com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.name;
+				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobAttack(
+						Dungeon.depth, syncId, enemy.pos, targetName, 0, getClass().getName(), pos);
+			}
 			return false;
 			
 		} else {
@@ -813,6 +820,16 @@ public abstract class Mob extends Char {
 			Invisibility.dispel(this);
 			spend( attackDelay() );
 			return true;
+		}
+	}
+
+	public void assignRemoteTarget(Char sender) {
+		if (sender != null) {
+			this.enemy = sender;
+			this.target = sender.pos;
+			if (this.state == SLEEPING || this.state == PASSIVE) {
+				this.state = HUNTING;
+			}
 		}
 	}
 	
@@ -1113,10 +1130,6 @@ public abstract class Mob extends Char {
 	}
 	
 	public void rollToDropLoot(){
-		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
-				&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
-			return;
-		}
 		if (isNetRemote) return;
 		if (Dungeon.hero.lvl > maxLvl + 2) return;
 
