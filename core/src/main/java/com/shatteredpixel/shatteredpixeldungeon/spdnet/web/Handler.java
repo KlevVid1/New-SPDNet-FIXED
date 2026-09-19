@@ -732,6 +732,11 @@ public class Handler {
 					if (mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 						mob.moveSprite(from, mob.pos);
 					}
+					// Устанавливаем цель моба на игрока, вызвавшего перемещение
+					NetHero sender = NetHero.getPlayerFromDungeon(mobMove.getName());
+					if (sender != null) {
+						mob.assignRemoteTarget(sender);
+					}
 				} finally {
 					mob.isNetRemote = false;
 				}
@@ -766,12 +771,6 @@ public class Handler {
 			}
 			if (mob != null && mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 				mob.sprite.attack(mobAttack.getTargetPos());
-			}
-			// Если удар направлен в этого игрока (Клиента) от моба, управляемого Хостом
-			if (mobAttack.getTargetName() != null && mobAttack.getTargetName().equals(Net.name)) {
-				if (Dungeon.hero != null && Dungeon.hero.isAlive() && mobAttack.getDamage() > 0) {
-					Dungeon.hero.damage(mobAttack.getDamage(), mob != null ? mob : Dungeon.hero);
-				}
 			}
 		});
 	}
