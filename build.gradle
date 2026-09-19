@@ -20,12 +20,12 @@ allprojects {
 
     ext {
         appName = 'SPDNet'
-        appPackageName = 'me.nonamedev.spdnet'
+        appPackageName = 'ru.klevvid.spdnet'
 
         appVersionCode = 896
         appVersionName = '3.3.8'
         // Net的版本号
-        appNetVersionName = '1'
+        appNetVersionName = '1.1'
 
         appJavaCompatibility = JavaVersion.VERSION_11
 
