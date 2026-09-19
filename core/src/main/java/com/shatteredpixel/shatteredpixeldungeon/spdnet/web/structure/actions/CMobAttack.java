@@ -17,4 +17,6 @@ public class CMobAttack extends Data {
 	private int targetPos;
 	private String targetName;
 	private int damage;
+	private String mobClass;
+	private int mobPos;
 }

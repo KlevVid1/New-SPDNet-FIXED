@@ -42,7 +42,9 @@ import com.watabou.utils.Reflection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -704,11 +706,29 @@ public class Handler {
 		}
 		Game.runOnRenderThread(() -> {
 			Mob mob = Mob.findBySyncId(mobMove.getSyncId(), mobMove.getFromPos());
-			if (mob != null && mob.isAlive() && mob.pos != mobMove.getToPos()) {
+			if (mob == null && mobMove.getMobClass() != null && !mobMove.getMobClass().isEmpty()) {
+				// Автоматически спавним отсутствующего моба на клиенте
+				try {
+					Class<?> cl = Class.forName(mobMove.getMobClass());
+					mob = (Mob) Reflection.newInstance(cl);
+					if (mob != null) {
+						mob.syncId = mobMove.getSyncId();
+						mob.pos = mobMove.getToPos();
+						if (mobMove.getHp() > 0) mob.HP = mobMove.getHp();
+						if (mobMove.getHt() > 0) mob.HT = mobMove.getHt();
+						if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+							GameScene.add(mob);
+						} else if (Dungeon.level != null) {
+							Dungeon.level.mobs.add(mob);
+						}
+					}
+				} catch (Exception ignored) {}
+			}
+			if (mob != null && mob.isAlive()) {
 				mob.isNetRemote = true;
 				try {
 					int from = mob.pos;
-					mob.move(mobMove.getToPos());
+					mob.pos = mobMove.getToPos();
 					if (mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
 						mob.moveSprite(from, mob.pos);
 					}
@@ -725,6 +745,22 @@ public class Handler {
 		}
 		Game.runOnRenderThread(() -> {
 			Mob mob = Mob.findBySyncId(mobAttack.getSyncId(), -1);
+			if (mob == null && mobAttack.getMobClass() != null && !mobAttack.getMobClass().isEmpty()) {
+				// Автоматически спавним моба, наносящего урон, если он ещё не появился на клиенте
+				try {
+					Class<?> cl = Class.forName(mobAttack.getMobClass());
+					mob = (Mob) Reflection.newInstance(cl);
+					if (mob != null) {
+						mob.syncId = mobAttack.getSyncId();
+						mob.pos = mobAttack.getMobPos() >= 0 ? mobAttack.getMobPos() : mobAttack.getTargetPos();
+						if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+							GameScene.add(mob);
+						} else if (Dungeon.level != null) {
+							Dungeon.level.mobs.add(mob);
+						}
+					}
+				} catch (Exception ignored) {}
+			}
 			if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
 				((Mimic) mob).stopHiding();
 			}
@@ -748,9 +784,12 @@ public class Handler {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
-			Mob existing = Mob.findBySyncId(mobSpawn.getSyncId(), mobSpawn.getPos());
-			if (existing != null) {
-				return;
+			if (mobSpawn.getSyncId() > 0) {
+				for (Mob m : Dungeon.level.mobs) {
+					if (m != null && m.syncId == mobSpawn.getSyncId()) {
+						return;
+					}
+				}
 			}
 			try {
 				Class<?> cl = Class.forName(mobSpawn.getMobClass());
@@ -765,9 +804,76 @@ public class Handler {
 					} else if (Dungeon.level != null) {
 						Dungeon.level.mobs.add(mob);
 					}
+					Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, mob.syncId);
 				}
 			} catch (Exception e) {
 				// silent
+			}
+		});
+	}
+
+	public static void handleMobSync(SMobSync mobSync) {
+		if (mobSync == null || mobSync.getDepth() != Dungeon.depth || Dungeon.level == null || mobSync.getMobs() == null) {
+			return;
+		}
+		Game.runOnRenderThread(() -> {
+			Set<Integer> hostMobIds = new HashSet<>();
+			for (SMobSpawn s : mobSync.getMobs()) {
+				if (s != null && s.getSyncId() > 0) {
+					hostMobIds.add(s.getSyncId());
+				}
+			}
+
+			// 1. Удаляем с клиента мобов, которых больше нет на хосте (убиты или деспавнились)
+			List<Mob> toRemove = new ArrayList<>();
+			for (Mob m : Dungeon.level.mobs) {
+				if (m != null && m.syncId > 0 && !hostMobIds.contains(m.syncId)) {
+					toRemove.add(m);
+				}
+			}
+			for (Mob m : toRemove) {
+				m.destroy();
+				Dungeon.level.mobs.remove(m);
+				Actor.remove(m);
+			}
+
+			// 2. Обновляем существующие и спавним отсутствующие мобы
+			for (SMobSpawn s : mobSync.getMobs()) {
+				if (s == null) continue;
+				Mob existing = null;
+				for (Mob m : Dungeon.level.mobs) {
+					if (m != null && m.syncId == s.getSyncId()) {
+						existing = m;
+						break;
+					}
+				}
+				if (existing != null) {
+					existing.HP = s.getHp();
+					existing.HT = s.getHt();
+					if (existing.pos != s.getPos()) {
+						existing.pos = s.getPos();
+						if (existing.sprite != null) {
+							existing.sprite.place(s.getPos());
+						}
+					}
+				} else {
+					try {
+						Class<?> cl = Class.forName(s.getMobClass());
+						Mob mob = (Mob) Reflection.newInstance(cl);
+						if (mob != null) {
+							mob.syncId = s.getSyncId();
+							mob.pos = s.getPos();
+							mob.HT = s.getHt();
+							mob.HP = s.getHp();
+							if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+								GameScene.add(mob);
+							} else {
+								Dungeon.level.mobs.add(mob);
+							}
+						}
+					} catch (Exception ignored) {}
+				}
+				Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, s.getSyncId());
 			}
 		});
 	}

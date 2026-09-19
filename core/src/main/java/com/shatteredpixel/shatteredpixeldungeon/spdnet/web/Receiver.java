@@ -214,6 +214,13 @@ public class Receiver {
 				NLog.w("Receiver: onChestOpen error: " + e.getMessage());
 			}
 		};
+		Emitter.Listener onMobSync = args -> {
+			try {
+				Handler.handleMobSync(JSON.parseObject(args[0].toString(), SMobSync.class));
+			} catch (Exception e) {
+				NLog.w("Receiver: onMobSync error: " + e.getMessage());
+			}
+		};
 		getSocket().on(Socket.EVENT_CONNECT, onConnected);
 		getSocket().on(Socket.EVENT_DISCONNECT, onDisconnected);
 		getSocket().on(Socket.EVENT_CONNECT_ERROR, onConnectionError);
@@ -249,6 +256,7 @@ public class Receiver {
 		getSocket().on(Events.MOB_MOVE.getName(), onMobMove);
 		getSocket().on(Events.MOB_ATTACK.getName(), onMobAttack);
 		getSocket().on(Events.MOB_SPAWN.getName(), onMobSpawn);
+		getSocket().on(Events.MOB_SYNC.getName(), onMobSync);
 		getSocket().on(Events.TERRAIN_CHANGE.getName(), onTerrainChange);
 		getSocket().on(Events.CHEST_OPEN.getName(), onChestOpen);
 	}

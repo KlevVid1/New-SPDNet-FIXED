@@ -256,10 +256,17 @@ public class NetHero extends Hero {
 		super.damage(dmg, src);
 		// Если моб нанёс урон на Хосте, отправляем уведомление удалённому клиенту
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning() && Dungeon.level != null) {
-			int mobSyncId = (src instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob) ?
-					((com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob) src).syncId : 0;
+			int mobSyncId = 0;
+			String mobClass = null;
+			int mobPos = -1;
+			if (src instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob) {
+				com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m = (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob) src;
+				mobSyncId = m.syncId;
+				mobClass = m.getClass().getName();
+				mobPos = m.pos;
+			}
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobAttack(
-					Dungeon.depth, mobSyncId, pos, this.name, dmg);
+					Dungeon.depth, mobSyncId, pos, this.name, dmg, mobClass, mobPos);
 		}
 	}
 }

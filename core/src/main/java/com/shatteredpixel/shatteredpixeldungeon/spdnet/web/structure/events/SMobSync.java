@@ -2,6 +2,8 @@ package com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.events;
 
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.Data;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,13 +13,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SMobMove extends Data {
+public class SMobSync extends Data {
 	private String name;
 	private int depth;
-	private int syncId;
-	private int fromPos;
-	private int toPos;
-	private String mobClass;
-	private int hp;
-	private int ht;
+	private List<SMobSpawn> mobs;
 }

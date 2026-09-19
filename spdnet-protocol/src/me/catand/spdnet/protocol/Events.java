@@ -47,6 +47,7 @@ public enum Events {
 	MOB_MOVE("mobMove"),
 	MOB_ATTACK("mobAttack"),
 	MOB_SPAWN("mobSpawn"),
+	MOB_SYNC("mobSync"),
 	TERRAIN_CHANGE("terrainChange"),
 	CHEST_OPEN("chestOpen");
 

@@ -192,11 +192,19 @@ public class Sender {
 	}
 
 	public static void sendMobMove(int depth, int syncId, int fromPos, int toPos) {
-		emit(Actions.MOB_MOVE.getName(), JSON.toJSONString(new CMobMove(depth, syncId, fromPos, toPos)));
+		sendMobMove(depth, syncId, fromPos, toPos, null, 0, 0);
+	}
+
+	public static void sendMobMove(int depth, int syncId, int fromPos, int toPos, String mobClass, int hp, int ht) {
+		emit(Actions.MOB_MOVE.getName(), JSON.toJSONString(new CMobMove(depth, syncId, fromPos, toPos, mobClass, hp, ht)));
 	}
 
 	public static void sendMobAttack(int depth, int syncId, int targetPos, String targetName, int damage) {
-		emit(Actions.MOB_ATTACK.getName(), JSON.toJSONString(new CMobAttack(depth, syncId, targetPos, targetName, damage)));
+		sendMobAttack(depth, syncId, targetPos, targetName, damage, null, -1);
+	}
+
+	public static void sendMobAttack(int depth, int syncId, int targetPos, String targetName, int damage, String mobClass, int mobPos) {
+		emit(Actions.MOB_ATTACK.getName(), JSON.toJSONString(new CMobAttack(depth, syncId, targetPos, targetName, damage, mobClass, mobPos)));
 	}
 
 	public static void sendMobSpawn(int depth, int syncId, String mobClass, int pos, int hp, int ht) {

@@ -16,4 +16,7 @@ public class CMobMove extends Data {
 	private int syncId;
 	private int fromPos;
 	private int toPos;
+	private String mobClass;
+	private int hp;
+	private int ht;
 }

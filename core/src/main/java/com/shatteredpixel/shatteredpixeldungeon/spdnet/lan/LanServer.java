@@ -354,6 +354,7 @@ public class LanServer {
 				}
 				broadcast(Events.ENTER_DUNGEON.getName(), new SEnterDungeon(session.name, session.status, ""), conn);
 				sendNotesForSession(conn, session);
+				sendMobsForSession(conn, session);
 
 			} else if (Actions.PLAYER_MOVE.getName().equals(actionName)) {
 				CPlayerMove c = JSON.parseObject(dataStr, CPlayerMove.class);
@@ -369,6 +370,7 @@ public class LanServer {
 				}
 				broadcast(Events.PLAYER_CHANGE_FLOOR.getName(), new SPlayerChangeFloor(session.name, c.getDepth(), ""), conn);
 				sendNotesForSession(conn, session);
+				sendMobsForSession(conn, session);
 
 			} else if (Actions.CHAT_MESSAGE.getName().equals(actionName)) {
 				CChatMessage c = JSON.parseObject(dataStr, CChatMessage.class);
@@ -530,12 +532,12 @@ public class LanServer {
 
 			} else if (Actions.MOB_MOVE.getName().equals(actionName)) {
 				CMobMove c = JSON.parseObject(dataStr, CMobMove.class);
-				SMobMove s = new SMobMove(session.name, c.getDepth(), c.getSyncId(), c.getFromPos(), c.getToPos());
+				SMobMove s = new SMobMove(session.name, c.getDepth(), c.getSyncId(), c.getFromPos(), c.getToPos(), c.getMobClass(), c.getHp(), c.getHt());
 				broadcastDungeon(Events.MOB_MOVE.getName(), s, session, c.getDepth());
 
 			} else if (Actions.MOB_ATTACK.getName().equals(actionName)) {
 				CMobAttack c = JSON.parseObject(dataStr, CMobAttack.class);
-				SMobAttack s = new SMobAttack(session.name, c.getDepth(), c.getSyncId(), c.getTargetPos(), c.getTargetName(), c.getDamage());
+				SMobAttack s = new SMobAttack(session.name, c.getDepth(), c.getSyncId(), c.getTargetPos(), c.getTargetName(), c.getDamage(), c.getMobClass(), c.getMobPos());
 				broadcastDungeon(Events.MOB_ATTACK.getName(), s, session, c.getDepth());
 
 			} else if (Actions.MOB_SPAWN.getName().equals(actionName)) {
@@ -622,6 +624,28 @@ public class LanServer {
 		}
 		SNoteList sNotes = new SNoteList("REPLACE", seed, depth, noteStrings, new ArrayList<>());
 		emit(conn, Events.NOTE_LIST.getName(), sNotes);
+	}
+
+	private static void sendMobsForSession(WebSocket conn, LanSession session) {
+		if (conn == null || !conn.isOpen() || session == null) {
+			return;
+		}
+		int depth = session.status != null ? session.status.getDepth() : 1;
+		if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level != null
+				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.depth == depth
+				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs != null) {
+			List<SMobSpawn> list = new ArrayList<>();
+			for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs) {
+				if (m != null && m.isAlive()) {
+					if (m.syncId == 0) {
+						m.syncId = ++com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.maxMobSyncId;
+					}
+					list.add(new SMobSpawn(session.name, depth, m.syncId, m.getClass().getName(), m.pos, m.HP, m.HT));
+				}
+			}
+			SMobSync sync = new SMobSync(session.name, depth, list);
+			emit(conn, Events.MOB_SYNC.getName(), sync);
+		}
 	}
 
 	private static List<Player> collectAllPlayers() {

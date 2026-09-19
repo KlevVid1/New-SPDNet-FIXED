@@ -137,12 +137,9 @@ public abstract class Mob extends Char {
 				if (m.syncId == syncId) return m;
 			}
 		}
-		for (Mob m : Dungeon.level.mobs) {
-			if (m.pos == fallbackPos) return m;
-		}
 		if (fallbackPos >= 0 && fallbackPos < Dungeon.level.length()) {
 			for (Mob m : Dungeon.level.mobs) {
-				if (Dungeon.level.adjacent(m.pos, fallbackPos)) return m;
+				if (m.pos == fallbackPos) return m;
 			}
 		}
 		return null;
@@ -881,7 +878,7 @@ public abstract class Mob extends Char {
 				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()
 				&& !isNetRemote && Dungeon.level != null) {
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobMove(
-					Dungeon.depth, syncId, from, step );
+					Dungeon.depth, syncId, from, step, getClass().getName(), HP, HT );
 		}
 	}
 	
