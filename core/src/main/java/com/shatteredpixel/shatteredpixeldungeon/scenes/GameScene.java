@@ -840,13 +840,13 @@ public class GameScene extends PixelScene {
 		}
 
 		// SPDNet: 仅在连接服务器且进入新楼层时发送进入地牢消息，避免窗口大小改变时重复发送
-		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && (Dungeon.depth != lastEnterDepth || Dungeon.seed != lastEnterSeed)) {
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && (Dungeon.floorId() != lastEnterDepth || Dungeon.seed != lastEnterSeed)) {
 			// 发送进入地牢信息
 			Status status1 = new Status(Dungeon.challenges,
 					Dungeon.seed,
 					Dungeon.hero.heroClass.ordinal(),
 					NetInProgress.mode.ordinal(),
-					Dungeon.depth,
+					Dungeon.floorId(),
 					Dungeon.hero.tier(),
 					Dungeon.hero.pos);
 			CEnterDungeon enterDungeon = new CEnterDungeon(status1);
@@ -862,7 +862,7 @@ public class GameScene extends PixelScene {
 			if (lastEnterDepth == -1) {
 				GLog.p("Кооператив: сид подземелья [%s]", com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed.convertToCode(Dungeon.seed));
 			}
-			lastEnterDepth = Dungeon.depth;
+			lastEnterDepth = Dungeon.floorId();
 			lastEnterSeed = Dungeon.seed;
 		}
 	}
@@ -1294,7 +1294,7 @@ public class GameScene extends PixelScene {
 				&& mob.syncId == 0 && Dungeon.level != null) {
 			mob.syncId = ++Dungeon.level.maxMobSyncId;
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobSpawn(
-					Dungeon.depth, mob.syncId, mob.getClass().getName(), mob.pos, mob.HP, mob.HT);
+					Dungeon.floorId(), mob.syncId, mob.getClass().getName(), mob.pos, mob.HP, mob.HT);
 		}
 
 		//mobs added on partial turns wait until next full turn to act

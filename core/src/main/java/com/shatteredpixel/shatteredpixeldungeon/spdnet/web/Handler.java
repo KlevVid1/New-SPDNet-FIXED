@@ -491,7 +491,7 @@ public class Handler {
 	 */
 	public static void handleNoteList(SNoteList noteList) {
 		// 铁人模式同种子的留言本就互不可见，无需额外过滤；直接按 seed+depth 过滤
-		if (noteList.getSeed() != Dungeon.seed || noteList.getDepth() != Dungeon.depth) {
+		if (noteList.getSeed() != Dungeon.seed || noteList.getDepth() != Dungeon.floorId()) {
 			return;
 		}
 		String mode = noteList.getMode();
@@ -531,7 +531,7 @@ public class Handler {
 		if (itemDrop == null || itemDrop.getName() == null || itemDrop.getName().equals(Net.name)) {
 			return;
 		}
-		if (itemDrop.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (itemDrop.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Item item = itemDrop.getItemObject();
@@ -556,7 +556,7 @@ public class Handler {
 		if (itemPickUp == null || itemPickUp.getName() == null || itemPickUp.getName().equals(Net.name)) {
 			return;
 		}
-		if (itemPickUp.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (itemPickUp.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -579,7 +579,7 @@ public class Handler {
 		if (terrainChange == null || terrainChange.getName() == null || terrainChange.getName().equals(Net.name)) {
 			return;
 		}
-		if (terrainChange.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (terrainChange.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -612,7 +612,7 @@ public class Handler {
 		if (chestOpen == null || chestOpen.getName() == null || chestOpen.getName().equals(Net.name)) {
 			return;
 		}
-		if (chestOpen.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (chestOpen.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -636,7 +636,7 @@ public class Handler {
 		if (mobDamage == null || mobDamage.getName() == null || mobDamage.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobDamage.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobDamage.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -659,7 +659,7 @@ public class Handler {
 				}
 				NetHero attacker = NetHero.getPlayerFromDungeon(mobDamage.getAttackerName());
 				if (attacker != null) {
-					mob.aggro(attacker);
+					mob.assignRemoteTarget(attacker);
 				}
 				if (mob.HP <= 0) {
 					mob.isNetRemote = true;
@@ -679,7 +679,7 @@ public class Handler {
 		if (mobDie == null || mobDie.getName() == null || mobDie.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobDie.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobDie.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -701,7 +701,7 @@ public class Handler {
 		if (mobMove == null || mobMove.getName() == null || mobMove.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobMove.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobMove.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -763,7 +763,7 @@ public class Handler {
 	}
 
 	public static void handleMobAttack(SMobAttack mobAttack) {
-		if (mobAttack == null || mobAttack.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobAttack == null || mobAttack.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -797,7 +797,7 @@ public class Handler {
 		if (mobSpawn == null || mobSpawn.getName() == null || mobSpawn.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobSpawn.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobSpawn.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -830,7 +830,7 @@ public class Handler {
 	}
 
 	public static void handleMobSync(SMobSync mobSync) {
-		if (mobSync == null || mobSync.getDepth() != Dungeon.depth || Dungeon.level == null || mobSync.getMobs() == null) {
+		if (mobSync == null || mobSync.getDepth() != Dungeon.floorId() || Dungeon.level == null || mobSync.getMobs() == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {

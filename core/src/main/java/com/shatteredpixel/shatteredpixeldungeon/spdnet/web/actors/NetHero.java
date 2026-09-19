@@ -208,7 +208,7 @@ public class NetHero extends Hero {
 			}
 			// 防止重复添加
 			removePlayerFromDungeonInternal(player.getName());
-			if (status.getSeed() == Dungeon.seed && status.getDepth() == Dungeon.depth) {
+			if (status.getSeed() == Dungeon.seed && status.getDepth() == Dungeon.floorId()) {
 				NetHero hero = new NetHero(player.getName());
 				hero.heroClass = status.getHeroClassEnum();
 				hero.tier = status.getArmorTier();
@@ -266,7 +266,7 @@ public class NetHero extends Hero {
 				mobPos = m.pos;
 			}
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobAttack(
-					Dungeon.depth, mobSyncId, pos, this.name, dmg, mobClass, mobPos);
+					Dungeon.floorId(), mobSyncId, pos, this.name, dmg, mobClass, mobPos);
 		}
 	}
 }

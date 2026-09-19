@@ -195,6 +195,10 @@ public class Dungeon {
 	// 1 is for quest sub-floors
 	public static int branch;
 
+	public static int floorId() {
+		return depth + 1000 * branch;
+	}
+
 	//keeps track of what levels the game should try to load instead of creating fresh
 	public static ArrayList<Integer> generatedLevels = new ArrayList<>();
 

@@ -37,7 +37,7 @@ public class Receiver {
 							Dungeon.seed,
 							Dungeon.hero.heroClass.ordinal(),
 							NetInProgress.mode.ordinal(),
-							Dungeon.depth,
+							Dungeon.floorId(),
 							Dungeon.hero.tier(),
 							Dungeon.hero.pos);
 					CEnterDungeon enterDungeon = new CEnterDungeon(status1);

@@ -286,11 +286,17 @@ public abstract class Mob extends Char {
 		super.act();
 
 		// SPDNet Co-op: Target-Driven Authority
-		// Если моб нацелен на удалённого напарника (NetHero), его действиями управляет устройство напарника.
+		// Если моб нацелен на удалённого напарника (NetHero), сначала проверяем, не атаковал ли его локальный герой
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
 				&& enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero) {
-			spend( TICK );
-			return true;
+			if (recentlyAttackedBy.contains(Dungeon.hero) || (fieldOfView != null && fieldOfView[Dungeon.hero.pos] && canAttack(Dungeon.hero))) {
+				aggro(Dungeon.hero);
+				target = Dungeon.hero.pos;
+				recentlyAttackedBy.clear();
+			} else {
+				spend( TICK );
+				return true;
+			}
 		}
 		
 		boolean justAlerted = alerted;
@@ -784,7 +790,7 @@ public abstract class Mob extends Char {
 				&& !(enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero)
 				&& !isNetRemote && Dungeon.level != null) {
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobMove(
-					Dungeon.depth, syncId, from, step, getClass().getName(), HP, HT );
+					Dungeon.floorId(), syncId, from, step, getClass().getName(), HP, HT );
 		}
 	}
 
@@ -811,7 +817,7 @@ public abstract class Mob extends Char {
 				String targetName = enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero ?
 						((com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero) enemy).name : com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.name;
 				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobAttack(
-						Dungeon.depth, syncId, enemy.pos, targetName, 0, getClass().getName(), pos);
+						Dungeon.floorId(), syncId, enemy.pos, targetName, 0, getClass().getName(), pos);
 			}
 			return false;
 			
@@ -895,7 +901,7 @@ public abstract class Mob extends Char {
 		//if attacked by something else than current target, and that thing is closer, switch targets
 		//or if attacked by target, simply update target position
 		if (state != FLEEING) {
-			if (state != HUNTING) {
+			if (state != HUNTING || this.enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero) {
 				aggro(enemy);
 				target = enemy.pos;
 			} else {
@@ -988,7 +994,7 @@ public abstract class Mob extends Char {
 
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDamage(
-					Dungeon.depth, syncId, pos, dmg, HP, com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.name);
+					Dungeon.floorId(), syncId, pos, dmg, HP, com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.name);
 		}
 	}
 
@@ -1054,7 +1060,7 @@ public abstract class Mob extends Char {
 	@Override
 	public void die( Object cause ) {
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
-			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDie(Dungeon.depth, syncId, pos);
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDie(Dungeon.floorId(), syncId, pos);
 		}
 
 		if (cause == Chasm.class){

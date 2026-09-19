@@ -632,7 +632,7 @@ public class LanServer {
 		}
 		int depth = session.status != null ? session.status.getDepth() : 1;
 		if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level != null
-				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.depth == depth
+				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.floorId() == depth
 				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs != null) {
 			List<SMobSpawn> list = new ArrayList<>();
 			for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs) {
