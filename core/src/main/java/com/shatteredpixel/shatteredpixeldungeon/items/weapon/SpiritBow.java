@@ -427,6 +427,16 @@ public class SpiritBow extends Weapon {
 				throwSound();
 
 				user.sprite.zap(cell);
+				if (user == Dungeon.hero && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendPotionThrow(
+							Dungeon.floorId(),
+							user.pos,
+							cell,
+							getClass().getName(),
+							0,
+							true
+					);
+				}
 				((MissileSprite) user.sprite.parent.recycle(MissileSprite.class)).
 						reset(user.sprite,
 								cell,

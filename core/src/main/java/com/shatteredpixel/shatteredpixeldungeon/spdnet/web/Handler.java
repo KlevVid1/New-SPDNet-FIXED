@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
@@ -13,7 +15,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BlastParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
+import com.watabou.noosa.audio.Sample;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
@@ -936,45 +940,69 @@ public class Handler {
 				return;
 			}
 
-			Potion potion = null;
-			try {
-				Class<?> clazz = Class.forName(msg.getPotionClass());
-				potion = (Potion) Reflection.newInstance(clazz);
-			} catch (Exception e) {
-				try {
-					potion = new com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfFrost();
-				} catch (Exception ignored) {}
-			}
-			if (potion == null) return;
+			Item item = createItemForMissile(msg.getPotionClass());
+			if (item == null) return;
 
-			final Potion finalPotion = potion;
+			final Item finalItem = item;
 			NetHero sender = NetHero.getPlayerFromDungeon(msg.getName());
 			if (sender != null && sender.sprite != null && sender.sprite.parent != null) {
 				sender.sprite.zap(targetPos);
+				finalItem.throwSound();
 				Char enemy = Actor.findChar(targetPos);
 				if (enemy != null && enemy.sprite != null) {
 					((MissileSprite) sender.sprite.parent.recycle(MissileSprite.class)).reset(
 							sender.sprite,
 							enemy.sprite,
-							finalPotion,
+							finalItem,
 							() -> {
-								finalPotion.shatter(targetPos);
+								onRemoteMissileLanded(finalItem, targetPos);
 							}
 					);
 				} else {
 					((MissileSprite) sender.sprite.parent.recycle(MissileSprite.class)).reset(
 							sender.sprite,
 							targetPos,
-							finalPotion,
+							finalItem,
 							() -> {
-								finalPotion.shatter(targetPos);
+								onRemoteMissileLanded(finalItem, targetPos);
 							}
 					);
 				}
 			} else {
-				finalPotion.shatter(targetPos);
+				onRemoteMissileLanded(finalItem, targetPos);
 			}
 		});
+	}
+
+	private static Item createItemForMissile(String className) {
+		if (className == null) return null;
+		try {
+			if (className.contains("SpiritArrow")) {
+				return new com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow().knockArrow();
+			}
+			Class<?> clazz = Class.forName(className);
+			return (Item) Reflection.newInstance(clazz);
+		} catch (Exception e) {
+			try {
+				return new com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart();
+			} catch (Exception ignored) {
+				return null;
+			}
+		}
+	}
+
+	private static void onRemoteMissileLanded(Item item, int targetPos) {
+		if (item instanceof Potion) {
+			((Potion) item).shatter(targetPos);
+		} else if (item instanceof MissileWeapon) {
+			Char target = Actor.findChar(targetPos);
+			if (target != null && Dungeon.level != null && targetPos < Dungeon.level.heroFOV.length && Dungeon.level.heroFOV[targetPos]) {
+				Sample.INSTANCE.play(Assets.Sounds.HIT);
+				CellEmitter.center(targetPos).burst(BlastParticle.FACTORY, 3);
+			} else if (Dungeon.level != null && targetPos < Dungeon.level.heroFOV.length && Dungeon.level.heroFOV[targetPos]) {
+				Sample.INSTANCE.play(Assets.Sounds.MISS, 0.6f, 0.6f, 1.5f);
+			}
+		}
 	}
 
 	// SPDNet Co-op: Синхронизация тушения вечного огня в комнатах с загадками
