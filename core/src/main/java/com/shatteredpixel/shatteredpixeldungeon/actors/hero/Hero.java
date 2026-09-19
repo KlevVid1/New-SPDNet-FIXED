@@ -2496,7 +2496,7 @@ public class Hero extends Char {
 					GameScene.updateKeyDisplay();
 					heap.open(this);
 					if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
-						com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendChestOpen(Dungeon.depth, heap.pos);
+						com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendChestOpen(Dungeon.floorId(), heap.pos);
 					}
 					spend(Key.TIME_TO_UNLOCK);
 				}

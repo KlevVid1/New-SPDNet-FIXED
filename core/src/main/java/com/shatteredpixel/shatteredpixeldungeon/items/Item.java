@@ -648,6 +648,19 @@ public class Item implements Bundlable {
 
 		throwSound();
 
+		if (user == Dungeon.hero && this instanceof com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion
+				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion p = (com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion) this;
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendPotionThrow(
+					Dungeon.floorId(),
+					user.pos,
+					cell,
+					getClass().getName(),
+				p.splashColor(),
+				p.isKnown()
+			);
+		}
+
 		Char enemy = Actor.findChar( cell );
 		QuickSlotButton.target(enemy);
 		

@@ -412,7 +412,7 @@ public class Potion extends Item {
 		return handler != null && handler.known().size() == Generator.Category.POTION.classes.length;
 	}
 	
-	protected int splashColor(){
+	public int splashColor(){
 		return anonymous ? 0x00AAFF : ItemSprite.pick( image, 5, 9 );
 	}
 	

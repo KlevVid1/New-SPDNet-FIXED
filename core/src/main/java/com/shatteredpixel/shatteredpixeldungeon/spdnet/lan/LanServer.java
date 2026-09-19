@@ -42,6 +42,7 @@ public class LanServer {
 	private static final Map<WebSocket, LanSession> sessions = new ConcurrentHashMap<>();
 	private static final Map<String, WebSocket> nameToConn = new ConcurrentHashMap<>();
 	private static final Map<String, List<JSONObject>> notesByLevel = new ConcurrentHashMap<>();
+	private static final Set<Integer> clearedEternalFiresByFloor = ConcurrentHashMap.newKeySet();
 	private static int nextNoteId = 1;
 
 	private static volatile String hostPlayerName = null;
@@ -144,6 +145,7 @@ public class LanServer {
 		seeds.put("seedFUN", currentSeed);
 		sessions.clear();
 		nameToConn.clear();
+		clearedEternalFiresByFloor.clear();
 
 		InetSocketAddress address = new InetSocketAddress("0.0.0.0", currentPort);
 		server = new WebSocketServer(address) {
@@ -225,6 +227,7 @@ public class LanServer {
 				server = null;
 				sessions.clear();
 				nameToConn.clear();
+		clearedEternalFiresByFloor.clear();
 				seeds.clear();
 			}
 			NLog.i("LanServer stopped");
@@ -544,6 +547,16 @@ public class LanServer {
 				CMobSpawn c = JSON.parseObject(dataStr, CMobSpawn.class);
 				SMobSpawn s = new SMobSpawn(session.name, c.getDepth(), c.getSyncId(), c.getMobClass(), c.getPos(), c.getHp(), c.getHt());
 				broadcastDungeon(Events.MOB_SPAWN.getName(), s, session, c.getDepth());
+			} else if (Actions.POTION_THROW.getName().equals(actionName)) {
+				CPotionThrow c = JSON.parseObject(dataStr, CPotionThrow.class);
+				SPotionThrow s = new SPotionThrow(session.name, c.getDepth(), c.getFromPos(), c.getTargetPos(), c.getPotionClass(), c.getColor(), c.isKnown());
+				broadcastDungeon(Events.POTION_THROW.getName(), s, session, c.getDepth());
+
+			} else if (Actions.ETERNAL_FIRE_CLEAR.getName().equals(actionName)) {
+				CEternalFireClear c = JSON.parseObject(dataStr, CEternalFireClear.class);
+				clearedEternalFiresByFloor.add(c.getDepth());
+				SEternalFireClear s = new SEternalFireClear(session.name, c.getDepth());
+				broadcastDungeon(Events.ETERNAL_FIRE_CLEAR.getName(), s, session, c.getDepth());
 			}
 		} catch (Exception e) {
 			NLog.w("LanServer event process error: " + e.getMessage());
@@ -624,6 +637,9 @@ public class LanServer {
 		}
 		SNoteList sNotes = new SNoteList("REPLACE", seed, depth, noteStrings, new ArrayList<>());
 		emit(conn, Events.NOTE_LIST.getName(), sNotes);
+		if (clearedEternalFiresByFloor.contains(depth)) {
+			emit(conn, Events.ETERNAL_FIRE_CLEAR.getName(), new SEternalFireClear("SERVER", depth));
+		}
 	}
 
 	private static void sendMobsForSession(WebSocket conn, LanSession session) {

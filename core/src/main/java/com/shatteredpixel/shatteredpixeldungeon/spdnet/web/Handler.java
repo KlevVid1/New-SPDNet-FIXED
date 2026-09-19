@@ -5,6 +5,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -892,6 +896,91 @@ public class Handler {
 					} catch (Exception ignored) {}
 				}
 				Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, s.getSyncId());
+			}
+		});
+	}
+
+	// SPDNet Co-op: Синхронизация бросания зелий и сплешей
+	public static void handlePotionThrow(SPotionThrow msg) {
+		if (msg == null || msg.getName() == null || msg.getName().equals(Net.name)) {
+			return;
+		}
+		if (msg.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
+			return;
+		}
+		Game.runOnRenderThread(() -> {
+			if (Dungeon.level == null || Dungeon.floorId() != msg.getDepth()) {
+				return;
+			}
+			int targetPos = msg.getTargetPos();
+			if (targetPos < 0 || targetPos >= Dungeon.level.length()) {
+				return;
+			}
+
+			Potion potion = null;
+			try {
+				Class<?> clazz = Class.forName(msg.getPotionClass());
+				potion = (Potion) Reflection.newInstance(clazz);
+			} catch (Exception e) {
+				try {
+					potion = new com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfFrost();
+				} catch (Exception ignored) {}
+			}
+			if (potion == null) return;
+
+			final Potion finalPotion = potion;
+			NetHero sender = NetHero.getPlayerFromDungeon(msg.getName());
+			if (sender != null && sender.sprite != null && sender.sprite.parent != null) {
+				sender.sprite.zap(targetPos);
+				Char enemy = Actor.findChar(targetPos);
+				if (enemy != null && enemy.sprite != null) {
+					((MissileSprite) sender.sprite.parent.recycle(MissileSprite.class)).reset(
+							sender.sprite,
+							enemy.sprite,
+							finalPotion,
+							() -> {
+								finalPotion.shatter(targetPos);
+							}
+					);
+				} else {
+					((MissileSprite) sender.sprite.parent.recycle(MissileSprite.class)).reset(
+							sender.sprite,
+							targetPos,
+							finalPotion,
+							() -> {
+								finalPotion.shatter(targetPos);
+							}
+					);
+				}
+			} else {
+				finalPotion.shatter(targetPos);
+			}
+		});
+	}
+
+	// SPDNet Co-op: Синхронизация тушения вечного огня в комнатах с загадками
+	public static void handleEternalFireClear(SEternalFireClear msg) {
+		if (msg == null || (msg.getName() != null && msg.getName().equals(Net.name))) {
+			return;
+		}
+		if (msg.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
+			return;
+		}
+		Game.runOnRenderThread(() -> {
+			if (Dungeon.level != null && Dungeon.floorId() == msg.getDepth()) {
+				MagicalFireRoom.EternalFire fire =
+						(MagicalFireRoom.EternalFire) Dungeon.level.blobs.get(MagicalFireRoom.EternalFire.class);
+				if (fire != null && fire.volume > 0) {
+					MagicalFireRoom.EternalFire.isRemoteClear = true;
+					try {
+						fire.fullyClear();
+					} finally {
+						MagicalFireRoom.EternalFire.isRemoteClear = false;
+					}
+					if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+						GameScene.updateMap();
+					}
+				}
 			}
 		});
 	}

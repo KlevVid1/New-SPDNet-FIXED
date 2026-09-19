@@ -156,7 +156,7 @@ public class Heap implements Bundlable {
 		}
 		
 		if (!isNetRemote && Dungeon.level != null && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
-			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemPickUp(Dungeon.depth, pos);
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemPickUp(Dungeon.floorId(), pos);
 		}
 
 		return item;

@@ -251,10 +251,15 @@ public class MagicalFireRoom extends SpecialRoom {
 			}
 		}
 
+		public static boolean isRemoteClear = false;
+
 		@Override
 		public void fullyClear() {
 			super.fullyClear();
 			Dungeon.level.buildFlagMaps();
+			if (!isRemoteClear && Dungeon.level != null && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendEternalFireClear(Dungeon.floorId());
+			}
 		}
 
 		@Override

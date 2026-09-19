@@ -214,6 +214,20 @@ public class Receiver {
 				NLog.w("Receiver: onChestOpen error: " + e.getMessage());
 			}
 		};
+		Emitter.Listener onPotionThrow = args -> {
+			try {
+				Handler.handlePotionThrow(JSON.parseObject(args[0].toString(), SPotionThrow.class));
+			} catch (Exception e) {
+				NLog.w("Receiver: onPotionThrow error: " + e.getMessage());
+			}
+		};
+		Emitter.Listener onEternalFireClear = args -> {
+			try {
+				Handler.handleEternalFireClear(JSON.parseObject(args[0].toString(), SEternalFireClear.class));
+			} catch (Exception e) {
+				NLog.w("Receiver: onEternalFireClear error: " + e.getMessage());
+			}
+		};
 		Emitter.Listener onMobSync = args -> {
 			try {
 				Handler.handleMobSync(JSON.parseObject(args[0].toString(), SMobSync.class));
@@ -259,6 +273,8 @@ public class Receiver {
 		getSocket().on(Events.MOB_SYNC.getName(), onMobSync);
 		getSocket().on(Events.TERRAIN_CHANGE.getName(), onTerrainChange);
 		getSocket().on(Events.CHEST_OPEN.getName(), onChestOpen);
+		getSocket().on(Events.POTION_THROW.getName(), onPotionThrow);
+		getSocket().on(Events.ETERNAL_FIRE_CLEAR.getName(), onEternalFireClear);
 	}
 
 	public static void cancelAll() {

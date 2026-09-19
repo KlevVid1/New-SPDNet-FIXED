@@ -1024,7 +1024,7 @@ public abstract class Level implements Bundlable {
 
 		if (!isRemoteTerrainChange && level == Dungeon.level && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
 			if (oldTerrain != terrain) {
-				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendTerrainChange(Dungeon.depth, cell, terrain);
+				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendTerrainChange(Dungeon.floorId(), cell, terrain);
 			}
 		}
 	}
@@ -1100,7 +1100,7 @@ public abstract class Level implements Bundlable {
 		}
 
 		if (!isRemoteDrop && this == Dungeon.level && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
-			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemDrop(Dungeon.depth, cell, item);
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemDrop(Dungeon.floorId(), cell, item);
 		}
 		
 		return heap;
