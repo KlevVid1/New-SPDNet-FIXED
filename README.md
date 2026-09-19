@@ -22,6 +22,7 @@ The game is distributed through **GitHub Releases**:
 - **Language**: Java
 - **JSON Library**: fastjson1 (Android 6-16 compatibility)
 - **Network**: Socket.IO client
+- 
 
 ## Credits
 
@@ -46,5 +47,7 @@ Special thanks to:
 ## Note
 
 This is a fan-made multiplayer modification and is not officially affiliated with or endorsed by the original Shattered Pixel Dungeon developers.
-Version 1 and 1.1 based on game version 3.3.8
+
+Version 1 and 1.1 based on game version 3.3.8.  
+Version 2 (indev) based on game version 4.0.0.  
 FIXED ONLY ANDROID VERSION!!!

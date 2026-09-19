@@ -38,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.ItemStatusHandler;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.AquaBrew;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.Brew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfHoneyedHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCleansing;
@@ -318,7 +319,7 @@ public class Potion extends Item {
 			}
 			shatter( cell );
 
-			if (!anonymous) {
+			if (!anonymous && (mustThrowPots.contains(getClass()) || canThrowPots.contains(getClass()) || this instanceof Brew)) {
 				Catalog.countUse(getClass());
 				if (Random.Float() < talentChance) {
 					Talent.onPotionUsed(curUser, cell, talentFactor);
@@ -411,7 +412,7 @@ public class Potion extends Item {
 		return handler != null && handler.known().size() == Generator.Category.POTION.classes.length;
 	}
 	
-	protected int splashColor(){
+	public int splashColor(){
 		return anonymous ? 0x00AAFF : ItemSprite.pick( image, 5, 9 );
 	}
 	

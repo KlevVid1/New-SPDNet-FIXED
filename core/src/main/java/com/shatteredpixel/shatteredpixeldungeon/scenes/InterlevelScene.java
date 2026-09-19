@@ -448,7 +448,7 @@ public class InterlevelScene extends PixelScene {
 						// 只有在上升、下降、返回、掉落时才会发送
 						// 在GameScene加载完毕时已经发送了进入楼层的数据包，所以只需要发送局内改变楼层的数据包
 						if (mode == Mode.ASCEND || mode == Mode.DESCEND || mode == Mode.FALL || mode == Mode.RETURN) {
-							Sender.sendPlayerChangeFloor(new CPlayerChangeFloor(Dungeon.depth));
+							Sender.sendPlayerChangeFloor(new CPlayerChangeFloor(Dungeon.floorId()));
 						}
 					} catch (Exception e) {
 						

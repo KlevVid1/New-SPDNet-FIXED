@@ -28,6 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CItemDrop;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CItemPickUp;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CTerrainChange;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CPotionThrow;
+import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CEternalFireClear;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CChestOpen;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CMobDamage;
 import com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CMobDie;
@@ -217,5 +219,13 @@ public class Sender {
 
 	public static void sendChestOpen(int depth, int pos) {
 		emit(Actions.CHEST_OPEN.getName(), JSON.toJSONString(new CChestOpen(depth, pos)));
+	}
+
+	public static void sendPotionThrow(int depth, int fromPos, int targetPos, String potionClass, int color, boolean known) {
+		emit(Actions.POTION_THROW.getName(), JSON.toJSONString(new CPotionThrow(depth, fromPos, targetPos, potionClass, color, known)));
+	}
+
+	public static void sendEternalFireClear(int depth) {
+		emit(Actions.ETERNAL_FIRE_CLEAR.getName(), JSON.toJSONString(new CEternalFireClear(depth)));
 	}
 }

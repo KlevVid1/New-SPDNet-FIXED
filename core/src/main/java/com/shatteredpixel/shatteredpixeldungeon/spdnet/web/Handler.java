@@ -5,6 +5,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
@@ -393,6 +397,22 @@ public class Handler {
 		NetHero.syncWithCurrentLevel();
 	}
 
+	public static void stepActiveBlobs() {
+		if (Dungeon.level == null || Dungeon.level.blobs == null) return;
+		try {
+			ArrayList<Blob> activeBlobs = new ArrayList<>(Dungeon.level.blobs.values());
+			for (Blob blob : activeBlobs) {
+				if (blob != null && blob.volume > 0) {
+					synchronized (blob) {
+						blob.act();
+					}
+				}
+			}
+		} catch (Exception e) {
+			NLog.w("stepActiveBlobs error: " + e.getMessage());
+		}
+	}
+
 	public static void handlePlayerMove(SPlayerMove playerMove) {
 		if (!playerMove.getName().equals(Net.name)) {
 			Player player = Net.playerList.get(playerMove.getName());
@@ -416,6 +436,9 @@ public class Handler {
 					} else {
 						player1.pos = playerMove.getPos();
 					}
+				}
+				if (status.getDepth() == Dungeon.floorId()) {
+					stepActiveBlobs();
 				}
 			});
 		}
@@ -491,7 +514,7 @@ public class Handler {
 	 */
 	public static void handleNoteList(SNoteList noteList) {
 		// 铁人模式同种子的留言本就互不可见，无需额外过滤；直接按 seed+depth 过滤
-		if (noteList.getSeed() != Dungeon.seed || noteList.getDepth() != Dungeon.depth) {
+		if (noteList.getSeed() != Dungeon.seed || noteList.getDepth() != Dungeon.floorId()) {
 			return;
 		}
 		String mode = noteList.getMode();
@@ -531,7 +554,7 @@ public class Handler {
 		if (itemDrop == null || itemDrop.getName() == null || itemDrop.getName().equals(Net.name)) {
 			return;
 		}
-		if (itemDrop.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (itemDrop.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Item item = itemDrop.getItemObject();
@@ -556,7 +579,7 @@ public class Handler {
 		if (itemPickUp == null || itemPickUp.getName() == null || itemPickUp.getName().equals(Net.name)) {
 			return;
 		}
-		if (itemPickUp.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (itemPickUp.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -579,7 +602,7 @@ public class Handler {
 		if (terrainChange == null || terrainChange.getName() == null || terrainChange.getName().equals(Net.name)) {
 			return;
 		}
-		if (terrainChange.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (terrainChange.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -612,7 +635,7 @@ public class Handler {
 		if (chestOpen == null || chestOpen.getName() == null || chestOpen.getName().equals(Net.name)) {
 			return;
 		}
-		if (chestOpen.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (chestOpen.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -636,7 +659,7 @@ public class Handler {
 		if (mobDamage == null || mobDamage.getName() == null || mobDamage.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobDamage.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobDamage.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -659,7 +682,7 @@ public class Handler {
 				}
 				NetHero attacker = NetHero.getPlayerFromDungeon(mobDamage.getAttackerName());
 				if (attacker != null) {
-					mob.aggro(attacker);
+					mob.assignRemoteTarget(attacker);
 				}
 				if (mob.HP <= 0) {
 					mob.isNetRemote = true;
@@ -679,7 +702,7 @@ public class Handler {
 		if (mobDie == null || mobDie.getName() == null || mobDie.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobDie.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobDie.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -701,7 +724,7 @@ public class Handler {
 		if (mobMove == null || mobMove.getName() == null || mobMove.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobMove.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobMove.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -763,7 +786,7 @@ public class Handler {
 	}
 
 	public static void handleMobAttack(SMobAttack mobAttack) {
-		if (mobAttack == null || mobAttack.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobAttack == null || mobAttack.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -797,7 +820,7 @@ public class Handler {
 		if (mobSpawn == null || mobSpawn.getName() == null || mobSpawn.getName().equals(Net.name)) {
 			return;
 		}
-		if (mobSpawn.getDepth() != Dungeon.depth || Dungeon.level == null) {
+		if (mobSpawn.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -830,7 +853,7 @@ public class Handler {
 	}
 
 	public static void handleMobSync(SMobSync mobSync) {
-		if (mobSync == null || mobSync.getDepth() != Dungeon.depth || Dungeon.level == null || mobSync.getMobs() == null) {
+		if (mobSync == null || mobSync.getDepth() != Dungeon.floorId() || Dungeon.level == null || mobSync.getMobs() == null) {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
@@ -892,6 +915,91 @@ public class Handler {
 					} catch (Exception ignored) {}
 				}
 				Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, s.getSyncId());
+			}
+		});
+	}
+
+	// SPDNet Co-op: Синхронизация бросания зелий и сплешей
+	public static void handlePotionThrow(SPotionThrow msg) {
+		if (msg == null || msg.getName() == null || msg.getName().equals(Net.name)) {
+			return;
+		}
+		if (msg.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
+			return;
+		}
+		Game.runOnRenderThread(() -> {
+			if (Dungeon.level == null || Dungeon.floorId() != msg.getDepth()) {
+				return;
+			}
+			int targetPos = msg.getTargetPos();
+			if (targetPos < 0 || targetPos >= Dungeon.level.length()) {
+				return;
+			}
+
+			Potion potion = null;
+			try {
+				Class<?> clazz = Class.forName(msg.getPotionClass());
+				potion = (Potion) Reflection.newInstance(clazz);
+			} catch (Exception e) {
+				try {
+					potion = new com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfFrost();
+				} catch (Exception ignored) {}
+			}
+			if (potion == null) return;
+
+			final Potion finalPotion = potion;
+			NetHero sender = NetHero.getPlayerFromDungeon(msg.getName());
+			if (sender != null && sender.sprite != null && sender.sprite.parent != null) {
+				sender.sprite.zap(targetPos);
+				Char enemy = Actor.findChar(targetPos);
+				if (enemy != null && enemy.sprite != null) {
+					((MissileSprite) sender.sprite.parent.recycle(MissileSprite.class)).reset(
+							sender.sprite,
+							enemy.sprite,
+							finalPotion,
+							() -> {
+								finalPotion.shatter(targetPos);
+							}
+					);
+				} else {
+					((MissileSprite) sender.sprite.parent.recycle(MissileSprite.class)).reset(
+							sender.sprite,
+							targetPos,
+							finalPotion,
+							() -> {
+								finalPotion.shatter(targetPos);
+							}
+					);
+				}
+			} else {
+				finalPotion.shatter(targetPos);
+			}
+		});
+	}
+
+	// SPDNet Co-op: Синхронизация тушения вечного огня в комнатах с загадками
+	public static void handleEternalFireClear(SEternalFireClear msg) {
+		if (msg == null || (msg.getName() != null && msg.getName().equals(Net.name))) {
+			return;
+		}
+		if (msg.getDepth() != Dungeon.floorId() || Dungeon.level == null) {
+			return;
+		}
+		Game.runOnRenderThread(() -> {
+			if (Dungeon.level != null && Dungeon.floorId() == msg.getDepth()) {
+				MagicalFireRoom.EternalFire fire =
+						(MagicalFireRoom.EternalFire) Dungeon.level.blobs.get(MagicalFireRoom.EternalFire.class);
+				if (fire != null && fire.volume > 0) {
+					MagicalFireRoom.EternalFire.isRemoteClear = true;
+					try {
+						fire.fullyClear();
+					} finally {
+						MagicalFireRoom.EternalFire.isRemoteClear = false;
+					}
+					if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+						GameScene.updateMap();
+					}
+				}
 			}
 		});
 	}

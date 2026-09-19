@@ -63,6 +63,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Sheep;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SacrificialParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.WindParticle;
@@ -196,6 +197,7 @@ public abstract class Level implements Bundlable {
 	public SparseArray<Plant> plants;
 	public SparseArray<Trap> traps;
 	public ArrayList<CustomTilemap> customTiles;
+	public ArrayList<CustomTilemap> customTerrain;
 	public ArrayList<CustomTilemap> customWalls;
 	
 	protected ArrayList<Item> itemsToSpawn = new ArrayList<>();
@@ -218,6 +220,7 @@ public abstract class Level implements Bundlable {
 	private static final String PLANTS		= "plants";
 	private static final String TRAPS       = "traps";
 	private static final String CUSTOM_TILES= "customTiles";
+	private static final String CUSTOM_TERRAIN= "customTerrain";
 	private static final String CUSTOM_WALLS= "customWalls";
 	private static final String MOBS		= "mobs";
 	private static final String BLOBS		= "blobs";
@@ -225,6 +228,7 @@ public abstract class Level implements Bundlable {
 
 	public void create() {
 
+		TargetedCell.cells.clear();
 		Random.pushGenerator( Dungeon.seedCurDepth() );
 
 		//TODO maybe just make this part of RegularLevel?
@@ -292,9 +296,12 @@ public abstract class Level implements Bundlable {
 						break;
 					default:
 						//if-else statements are fine here as only one chance can be above 0 at a time
-						if (Random.Float() < MossyClump.overrideNormalLevelChance()){
+						// we pre-generate the floats to ensure Random is called consistently
+						float mossyChance = Random.Float();
+						float trapMechChance = Random.Float();
+						if (mossyChance < MossyClump.overrideNormalLevelChance()){
 							feeling = MossyClump.getNextFeeling();
-						} else if (Random.Float() < TrapMechanism.overrideNormalLevelChance()) {
+						} else if (trapMechChance < TrapMechanism.overrideNormalLevelChance()) {
 							feeling = TrapMechanism.getNextFeeling();
 						} else {
 							feeling = Feeling.NONE;
@@ -316,6 +323,7 @@ public abstract class Level implements Bundlable {
 			plants = new SparseArray<>();
 			traps = new SparseArray<>();
 			customTiles = new ArrayList<>();
+			customTerrain = new ArrayList<>();
 			customWalls = new ArrayList<>();
 			
 		} while (!build());
@@ -377,8 +385,8 @@ public abstract class Level implements Bundlable {
 
 		version = bundle.getInt( VERSION );
 		
-		//saves from before v2.5.4 are not supported
-		if (version < ShatteredPixelDungeon.v2_5_4){
+		//saves from before v3.1.1 are not supported
+		if (version < ShatteredPixelDungeon.v3_1_1){
 			throw new RuntimeException("old save");
 		}
 
@@ -392,6 +400,7 @@ public abstract class Level implements Bundlable {
 		plants = new SparseArray<>();
 		traps = new SparseArray<>();
 		customTiles = new ArrayList<>();
+		customTerrain = new ArrayList<>();
 		customWalls = new ArrayList<>();
 		
 		map		= bundle.getIntArray( MAP );
@@ -431,6 +440,12 @@ public abstract class Level implements Bundlable {
 			customTiles.add(vis);
 		}
 
+		collection = bundle.getCollection( CUSTOM_TERRAIN );
+		for (Bundlable p : collection) {
+			CustomTilemap vis = (CustomTilemap)p;
+			customTerrain.add(vis);
+		}
+
 		collection = bundle.getCollection( CUSTOM_WALLS );
 		for (Bundlable p : collection) {
 			CustomTilemap vis = (CustomTilemap)p;
@@ -468,6 +483,17 @@ public abstract class Level implements Bundlable {
 		}
 		if (bundle.contains( "max_mob_sync_id" )){
 			maxMobSyncId = bundle.getInt( "max_mob_sync_id" );
+		}
+
+		TargetedCell.cells.clear();
+		if (bundle.contains( "targeted_cells" )){
+			collection = bundle.getCollection( "targeted_cells" );
+			for (Bundlable c : collection) {
+				TargetedCell cell = (TargetedCell)c;
+				if (cell != null) {
+					TargetedCell.cells.put(cell.pos, cell);
+				}
+			}
 		}
 
 		buildFlagMaps();
@@ -513,6 +539,7 @@ public abstract class Level implements Bundlable {
 		bundle.put( PLANTS, plants.valueList() );
 		bundle.put( TRAPS, traps.valueList() );
 		bundle.put( CUSTOM_TILES, customTiles );
+		bundle.put( CUSTOM_TERRAIN, customTerrain);
 		bundle.put( CUSTOM_WALLS, customWalls );
 		bundle.put( MOBS, mobs );
 		bundle.put( BLOBS, blobs.values() );
@@ -520,6 +547,7 @@ public abstract class Level implements Bundlable {
 		bundle.put( "mobs_to_spawn", mobsToSpawn.toArray(new Class[0]));
 		bundle.put( "respawner", respawner );
 		bundle.put( "max_mob_sync_id", maxMobSyncId );
+		bundle.put( "targeted_cells", TargetedCell.cells.valueList() );
 	}
 	
 	public int tunnelTile() {
@@ -996,7 +1024,7 @@ public abstract class Level implements Bundlable {
 
 		if (!isRemoteTerrainChange && level == Dungeon.level && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
 			if (oldTerrain != terrain) {
-				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendTerrainChange(Dungeon.depth, cell, terrain);
+				com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendTerrainChange(Dungeon.floorId(), cell, terrain);
 			}
 		}
 	}
@@ -1072,7 +1100,7 @@ public abstract class Level implements Bundlable {
 		}
 
 		if (!isRemoteDrop && this == Dungeon.level && ShatteredPixelDungeon.scene() instanceof GameScene && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
-			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemDrop(Dungeon.depth, cell, item);
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendItemDrop(Dungeon.floorId(), cell, item);
 		}
 		
 		return heap;
@@ -1148,14 +1176,14 @@ public abstract class Level implements Bundlable {
 	public boolean setCellToWater( boolean includeTraps, int cell ){
 		Point p = cellToPoint(cell);
 
-		//if a custom tilemap is over that cell, don't put water there
+		//if a custom tilemap is over that cell, check if it allows water
 		for (CustomTilemap cust : customTiles){
 			Point custPoint = new Point(p);
 			custPoint.x -= cust.tileX;
 			custPoint.y -= cust.tileY;
 			if (custPoint.x >= 0 && custPoint.y >= 0
 					&& custPoint.x < cust.tileW && custPoint.y < cust.tileH){
-				if (cust.image(custPoint.x, custPoint.y) != null){
+				if (!cust.allowWater(custPoint.x, custPoint.y)){
 					return false;
 				}
 			}
@@ -1460,46 +1488,41 @@ public abstract class Level implements Bundlable {
 			}
 
 			Dungeon.hero.mindVisionEnemies.clear();
-			if (c.buff( MindVision.class ) != null) {
-				for (Mob mob : mobs) {
-					if (mob instanceof Mimic && mob.alignment == Char.Alignment.NEUTRAL&& ((Mimic) mob).stealthy()){
-						continue;
-					}
-					for (int i : PathFinder.NEIGHBOURS9) {
-						heroMindFov[mob.pos + i] = true;
-					}
-				}
-			} else {
 
-				int mindVisRange = 0;
-				if (((Hero) c).hasTalent(Talent.HEIGHTENED_SENSES)){
-					mindVisRange = 1+((Hero) c).pointsInTalent(Talent.HEIGHTENED_SENSES);
+			int mindVisRange = 0;
+			if (c.buff(MindVision.class) != null) {
+				mindVisRange = Integer.MAX_VALUE;
+			} else {
+				if (((Hero) c).hasTalent(Talent.HEIGHTENED_SENSES)) {
+					mindVisRange = 1 + ((Hero) c).pointsInTalent(Talent.HEIGHTENED_SENSES);
 				}
-				if (c.buff(DivineSense.DivineSenseTracker.class) != null){
-					if (((Hero) c).heroClass == HeroClass.CLERIC){
-						mindVisRange = 4+4*((Hero) c).pointsInTalent(Talent.DIVINE_SENSE);
+				if (c.buff(DivineSense.DivineSenseTracker.class) != null) {
+					if (((Hero) c).heroClass == HeroClass.CLERIC) {
+						mindVisRange = 4 + 4 * ((Hero) c).pointsInTalent(Talent.DIVINE_SENSE);
 					} else {
-						mindVisRange = 1+2*((Hero) c).pointsInTalent(Talent.DIVINE_SENSE);
+						mindVisRange = 1 + 2 * ((Hero) c).pointsInTalent(Talent.DIVINE_SENSE);
 					}
 				}
 				mindVisRange = Math.max(mindVisRange, EyeOfNewt.mindVisionRange());
+			}
+
+			if (mindVisRange >= 1) {
 
 				//power of many's life link spell allows allies to get divine sense
 				Char ally = PowerOfMany.getPoweredAlly();
-				if (ally != null && ally.buff(DivineSense.DivineSenseTracker.class) == null){
+				if (ally != null && ally.buff(DivineSense.DivineSenseTracker.class) == null) {
 					ally = null;
 				}
 
-				if (mindVisRange >= 1) {
-					for (Mob mob : mobs) {
-						if (mob instanceof Mimic && mob.alignment == Char.Alignment.NEUTRAL && ((Mimic) mob).stealthy()){
-							continue;
-						}
-						int p = mob.pos;
-						if (!fieldOfView[p] && (distance(c.pos, p) <= mindVisRange || (ally != null && distance(ally.pos, p) <= mindVisRange))) {
-							for (int i : PathFinder.NEIGHBOURS9) {
-								heroMindFov[mob.pos + i] = true;
-							}
+				for (Mob mob : mobs) {
+					if ((mob instanceof Mimic && mob.alignment == Char.Alignment.NEUTRAL && ((Mimic) mob).stealthy())
+						|| Char.hasProp(mob, Char.Property.OBJECT)){
+						continue;
+					}
+					int p = mob.pos;
+					if (!fieldOfView[p] && (distance(c.pos, p) <= mindVisRange || (ally != null && distance(ally.pos, p) <= mindVisRange))) {
+						for (int i : PathFinder.NEIGHBOURS9) {
+							heroMindFov[mob.pos + i] = true;
 						}
 					}
 				}
@@ -1514,7 +1537,7 @@ public abstract class Level implements Bundlable {
 
 			for (TalismanOfForesight.CharAwareness a : c.buffs(TalismanOfForesight.CharAwareness.class)){
 				Char ch = (Char) Actor.findById(a.charID);
-				if (ch == null || !ch.isAlive()) {
+				if (ch == null || !ch.isAlive() || Char.hasProp(ch, Char.Property.OBJECT)) {
 					continue;
 				}
 				int p = ch.pos;
@@ -1588,9 +1611,11 @@ public abstract class Level implements Bundlable {
 		return (float)Math.sqrt(Math.pow(Math.abs( ax - bx ), 2) + Math.pow(Math.abs( ay - by ), 2));
 	}
 
-	//usually just if a cell is solid, but other cases exist too
+	//usually just if the base terrain of a cell is solid, but other cases exist too
+	//only check on base terrain, we want to ignore temporary changes from blobs (e.g. light wall)
 	public boolean invalidHeroPos( int tile ){
-		return !passable[tile] && !avoid[tile];
+		int flags = Terrain.flags[map[tile]];
+		return (flags & Terrain.PASSABLE) != 0 && (flags & Terrain.AVOID) != 0;
 	}
 
 	//returns true if the input is a valid tile within the level

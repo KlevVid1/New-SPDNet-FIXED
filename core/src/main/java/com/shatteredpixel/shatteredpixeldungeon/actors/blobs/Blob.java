@@ -109,7 +109,7 @@ public class Blob extends Actor {
 	protected ArrayList<Integer> cellsToFlagUpdate = new ArrayList<>();
 	
 	@Override
-	public boolean act() {
+	public synchronized boolean act() {
 		
 		spend( TICK );
 		
@@ -129,6 +129,11 @@ public class Blob extends Actor {
 				Dungeon.level.updateCellFlags(i);
 			}
 			cellsToFlagUpdate.clear();
+
+			if (volume == 0 && !area.isEmpty()) {
+				area.setEmpty();
+				System.arraycopy(cur, 0, off, 0, cur.length);
+			}
 			
 		} else {
 			if (!area.isEmpty()) {
@@ -209,6 +214,10 @@ public class Blob extends Actor {
 	public void seed( Level level, int cell, int amount ) {
 		if (cur == null) cur = new int[level.length()];
 		if (off == null) off = new int[cur.length];
+
+		if (volume == 0) {
+			timeToNow();
+		}
 
 		cur[cell] += amount;
 		volume += amount;

@@ -46,7 +46,9 @@ public enum Actions {
 	MOB_SPAWN("mobSpawn"),
 	MOB_SYNC("mobSync"),
 	TERRAIN_CHANGE("terrainChange"),
-	CHEST_OPEN("chestOpen");
+	CHEST_OPEN("chestOpen"),
+	POTION_THROW("potionThrow"),
+	ETERNAL_FIRE_CLEAR("eternalFireClear");
 
 	private final String name;
 

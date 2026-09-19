@@ -214,7 +214,7 @@ public class Mimic extends Mob {
 		alignment = Alignment.ENEMY;
 		if (sprite != null) sprite.idle();
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
-			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendChestOpen(Dungeon.depth, pos);
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendChestOpen(Dungeon.floorId(), pos);
 		}
 		if (Actor.chars().contains(this) && Dungeon.level.heroFOV[pos]) {
 			enemy = Dungeon.hero;
