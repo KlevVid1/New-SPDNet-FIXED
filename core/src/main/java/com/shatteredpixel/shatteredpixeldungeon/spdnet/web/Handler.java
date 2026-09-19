@@ -730,7 +730,25 @@ public class Handler {
 					int from = mob.pos;
 					mob.pos = mobMove.getToPos();
 					if (mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
-						mob.moveSprite(from, mob.pos);
+						boolean inHeroFOV = Dungeon.level != null && mob.pos >= 0 && mob.pos < Dungeon.level.length() && Dungeon.level.heroFOV[mob.pos];
+						boolean fromInFOV = Dungeon.level != null && from >= 0 && from < Dungeon.level.length() && Dungeon.level.heroFOV[from];
+
+						if (inHeroFOV || fromInFOV) {
+							mob.sprite.visible = true;
+							if (!fromInFOV && inHeroFOV) {
+								mob.sprite.place(from);
+								if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
+									Dungeon.hero.interrupt();
+								}
+							}
+							mob.moveSprite(from, mob.pos);
+							if (!inHeroFOV) {
+								mob.sprite.visible = false;
+							}
+						} else {
+							mob.sprite.visible = false;
+							mob.sprite.place(mob.pos);
+						}
 					}
 					// Устанавливаем цель моба на игрока, вызвавшего перемещение
 					NetHero sender = NetHero.getPlayerFromDungeon(mobMove.getName());
@@ -853,6 +871,7 @@ public class Handler {
 						existing.pos = s.getPos();
 						if (existing.sprite != null) {
 							existing.sprite.place(s.getPos());
+							existing.sprite.visible = Dungeon.level != null && existing.pos >= 0 && existing.pos < Dungeon.level.length() && Dungeon.level.heroFOV[existing.pos];
 						}
 					}
 				} else {
