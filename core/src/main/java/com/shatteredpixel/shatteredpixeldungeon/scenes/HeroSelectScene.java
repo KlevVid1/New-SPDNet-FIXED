@@ -101,8 +101,6 @@ public class HeroSelectScene extends PixelScene {
 //	private IconButton btnOptions;
 //	private GameOptions optionsPane;
 	private IconButton btnExit;
-	// 网络状态按钮, 在原本的选项按钮位置
-	private NetButton btnNetStatus;
 	// 模式选择按钮
 	private ModeButton btnMode;
 	// 挑战选择按钮
@@ -221,11 +219,6 @@ public class HeroSelectScene extends PixelScene {
 			add(button);
 			heroBtns.add(button);
 		}
-
-		// 网络状态按钮创建
-		btnNetStatus = new NetButton();
-		add(btnNetStatus);
-		btnNetStatus.visible = btnNetStatus.active = false;
 
 //		optionsPane = new GameOptions();
 //		optionsPane.visible = optionsPane.active = false;
@@ -358,8 +351,6 @@ public class HeroSelectScene extends PixelScene {
 //			optionsPane.setPos(btnOptions.right(), btnOptions.top() - optionsPane.height() - 2);
 //			align(optionsPane);
 
-			// 网络状态按钮的位置
-			btnNetStatus.setRect(startBtn.right(), startBtn.top(), btnNetStatus.width(), btnNetStatus.height());
 		} else {
 			background.visible = false;
 
@@ -394,8 +385,6 @@ public class HeroSelectScene extends PixelScene {
 //			btnOptions.setRect(heroBtns.get(0).left() + 16, Camera.main.height-HeroBtn.HEIGHT-16, 20, 21);
 //			optionsPane.setPos(heroBtns.get(0).left(), 0);
 
-			// 网络状态按钮的位置
-			btnNetStatus.setRect(heroBtns.get(0).left() + 16, Camera.main.height-HeroBtn.HEIGHT-16, 20, 21);
 		}
 
 		btnExit = new ExitButton();
@@ -509,13 +498,6 @@ public class HeroSelectScene extends PixelScene {
 			infoButton.visible = infoButton.active = true;
 			infoButton.setPos(heroName.right(), heroName.top() + (heroName.height() - infoButton.height())/2f);
 			align(infoButton);
-
-			// 删除选项按钮的相关配置, 因为重构UI
-//			btnOptions.visible = btnOptions.active = !SPDSettings.intro();
-
-			// 网络状态按钮可见
-			btnNetStatus.visible = btnNetStatus.active = true;
-
 		} else {
 			// 删除title, 因为重构UI
 //			title.visible = false;
@@ -529,17 +511,6 @@ public class HeroSelectScene extends PixelScene {
 
 			infoButton.visible = infoButton.active = true;
 			infoButton.setPos(startBtn.right(), startBtn.top());
-
-			// 删除选项按钮的相关配置, 因为重构UI
-//			btnOptions.visible = btnOptions.active = !SPDSettings.intro();
-//			btnOptions.setPos(startBtn.left()-btnOptions.width(), startBtn.top());
-//
-//			optionsPane.setPos(heroBtns.get(0).left(), startBtn.top() - optionsPane.height() - 2);
-//			align(optionsPane);
-
-			// 网络状态按钮的位置与可见性
-			btnNetStatus.visible = btnNetStatus.active = true;
-			btnNetStatus.setPos(startBtn.left()-btnNetStatus.width(), startBtn.top());
 		}
 
 		// 删除选项按钮的相关配置, 因为重构UI
@@ -596,9 +567,6 @@ public class HeroSelectScene extends PixelScene {
 //		optionsPane.alpha(alpha);
 //		btnOptions.enable(alpha != 0);
 //		btnOptions.icon().alpha(alpha);
-		// 网络状态按钮的渐隐
-		btnNetStatus.enable(alpha != 0);
-		btnNetStatus.icon().alpha(alpha);
 		// 模式选择按钮的渐隐
 		btnMode.enable(alpha != 0);
 		btnMode.alpha(alpha);

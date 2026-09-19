@@ -89,7 +89,6 @@ public class TitleScene extends PixelScene {
 	private BitmapText version;
 	private IconButton btnFade;
 	private ExitButton btnExit;
-	private StyledButton btnConnection;
 	private StyledButton btnPlayers;
 
 	@Override
@@ -191,20 +190,7 @@ public class TitleScene extends PixelScene {
 //		btnSupport = new SupportButton(GREY_TR, Messages.get(this, "support"));
 //		add(btnSupport);
 
-		// 服务器连接按钮
 		boolean isChinese = Messages.lang() == Languages.CHI_SMPL || Messages.lang() == Languages.CHI_TRAD;
-		String serverBtnText = Messages.lang() == Languages.RUSSIAN ? "Сервер" :
-				(isChinese ? "连接服务器" : "Server");
-		btnConnection = new StyledButton(GREY_TR, serverBtnText) {
-			@Override
-			protected void onClick() {
-				NetWindow.showServerInfo();
-			}
-		};
-
-		btnConnection.icon(NetIcons.get(NetIcons.GLOBE));
-		btnConnection.icon().scale.set(PixelScene.align(0.8f));
-		add(btnConnection);
 
 		// Локальная сеть / 局域网联机 / Local Co-op
 		String lanBtnText = Messages.lang() == Languages.RUSSIAN ? "Локальная сеть" :
@@ -271,12 +257,11 @@ public class TitleScene extends PixelScene {
 		float buttonAreaWidth = landscape() ? PixelScene.MIN_WIDTH_L-6 : PixelScene.MIN_WIDTH_P-2;
 		float btnAreaLeft = insets.left + (w - buttonAreaWidth) / 2f;
 		if (landscape()) {
-			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, (buttonAreaWidth/3)-1, BTN_HEIGHT);
+			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, (buttonAreaWidth/2)-1, BTN_HEIGHT);
 			align(btnPlay);
 			// 替换支持按钮
 //			btnSupport.setRect(btnPlay.right()+2, btnPlay.top(), btnPlay.width(), BTN_HEIGHT);
-			btnConnection.setRect(btnPlay.right()+2, topRegion+GAP, (btnPlay.width()), BTN_HEIGHT);
-			btnPlayers.setRect(btnConnection.right()+2, topRegion+GAP, btnConnection.width(), BTN_HEIGHT);
+			btnPlayers.setRect(btnPlay.right()+2, insets.top + topRegion+GAP, (buttonAreaWidth/2)-1, BTN_HEIGHT);
 			btnRankings.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, (float) (Math.floor(buttonAreaWidth/3f)-1), BTN_HEIGHT);
 			btnJournal.setRect(btnRankings.right()+2, btnRankings.top(), btnRankings.width(), BTN_HEIGHT);
 			btnNews.setRect(btnJournal.right()+2, btnJournal.top(), btnRankings.width(), BTN_HEIGHT);
@@ -288,9 +273,8 @@ public class TitleScene extends PixelScene {
 			align(btnPlay);
 			// 替换支持按钮
 //			btnSupport.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, btnPlay.width(), BTN_HEIGHT);
-			btnConnection.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, (btnPlay.width()/2)-1, BTN_HEIGHT);
-			btnPlayers.setRect(btnConnection.right()+2, btnConnection.top(), btnConnection.width(), BTN_HEIGHT);
-			btnRankings.setRect(btnPlay.left(), btnConnection.bottom()+ GAP, (btnPlay.width()/2)-1, BTN_HEIGHT);
+			btnPlayers.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, buttonAreaWidth, BTN_HEIGHT);
+			btnRankings.setRect(btnPlay.left(), btnPlayers.bottom()+ GAP, (btnPlay.width()/2)-1, BTN_HEIGHT);
 			btnJournal.setRect(btnRankings.right()+2, btnRankings.top(), btnRankings.width(), BTN_HEIGHT);
 			btnNews.setRect(btnRankings.left(), btnRankings.bottom()+ GAP, btnRankings.width(), BTN_HEIGHT);
 			btnChanges.setRect(btnNews.right()+2, btnNews.top(), btnNews.width(), BTN_HEIGHT);
@@ -374,7 +358,6 @@ public class TitleScene extends PixelScene {
 		btnPlay.enable(alpha != 0);
 		// 替换支持按钮
 		//btnSupport.enable(alpha != 0);
-		btnConnection.enable(alpha != 0);
 		btnPlayers.enable(alpha != 0);
 		btnRankings.enable(alpha != 0);
 		btnJournal.enable(alpha != 0);
@@ -386,7 +369,6 @@ public class TitleScene extends PixelScene {
 		btnPlay.alpha(alpha);
 		// 替换支持按钮
 		//btnSupport.alpha(alpha);
-		btnConnection.alpha(alpha);
 		btnPlayers.alpha(alpha);
 		btnRankings.alpha(alpha);
 		btnJournal.alpha(alpha);

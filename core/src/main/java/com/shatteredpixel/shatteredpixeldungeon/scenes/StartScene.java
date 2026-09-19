@@ -80,11 +80,6 @@ public class StartScene extends PixelScene {
 		btnExit.setPos( insets.left + w - btnExit.width(), insets.top );
 		add( btnExit );
 
-		// 网络按钮
-		NetButton btnNet = new NetButton();
-		btnNet.setRect(0, 0, btnNet.width(), btnNet.height());
-		add(btnNet);
-
 		IconTitle title = new IconTitle( Icons.ENTER.get(), Messages.get(this, "title"));
 		title.setSize(200, 0);
 		title.setPos(
