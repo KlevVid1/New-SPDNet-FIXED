@@ -766,6 +766,7 @@ public abstract class Mob extends Char {
 
 	@Override
 	public void move(int step, boolean travelling) {
+		int from = pos;
 		super.move(step, travelling);
 		if (usingStealthGamePlay
 				&& travelling
@@ -778,6 +779,12 @@ public abstract class Mob extends Char {
 			} else {
 				WandOfBlastWave.BlastWave.blast(pos, 1f);
 			}
+		}
+		if (from != step && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
+				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()
+				&& !isNetRemote && Dungeon.level != null) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobMove(
+					Dungeon.depth, syncId, from, step, getClass().getName(), HP, HT );
 		}
 	}
 
@@ -968,17 +975,7 @@ public abstract class Mob extends Char {
 		}
 	}
 
-	@Override
-	public void move( int step, boolean travelling ) {
-		int from = pos;
-		super.move( step, travelling );
-		if (from != step && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
-				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()
-				&& !isNetRemote && Dungeon.level != null) {
-			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobMove(
-					Dungeon.depth, syncId, from, step, getClass().getName(), HP, HT );
-		}
-	}
+
 	
 	
 	@Override
