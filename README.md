@@ -11,7 +11,12 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 
 ## Download
 
-The game is distributed through **GitHub Releases**
+## 📥 Downloads
+
+[![Latest Release](https://img.shields.io/github/v/release/KlevVid1/New-SPDNet-FIXED?style=for-the-badge&logo=github&logoColor=white&color=success&label=Download%20Latest%20APK)](https://github.com/KlevVid1/New-SPDNet-FIXED/releases/latest)
+
+> 💡 **Tip:** Pre-built `.apk` files for Android can be found in the **Assets** dropdown of the latest release.  
+> Looking for other builds? Check out the [All Releases](https://github.com/KlevVid1/New-SPDNet-FIXED/releases) page.
 
 ## Credits
 
@@ -37,8 +42,11 @@ Special thanks to:
 
 This is a fan-made multiplayer modification and is not officially affiliated with or endorsed by the original Shattered Pixel Dungeon developers.
 
-NOW ALL CHANGES WILL BE COMMITED TO `master` BRANCH
+> [!IMPORTANT]
+> **Current Platform Status:** Currently, only the **Android** build is stable. Work is currently underway to support desktops.
 
-Version 1 and 1.1 based on game version 3.3.8.  
-Version 2 (indev) based on game version 4.0.0.  
-FIXED ONLY ANDROID VERSION!!!
+## Compatibility & Branches
+
+- **Branch policy:** All active development is pushed directly to the `master` branch.
+- **Version 1.x:** Based on Shattered Pixel Dungeon `v3.3.8`.
+- **Version 2.x (in development):** Based on Shattered Pixel Dungeon `v4.0.0`.
