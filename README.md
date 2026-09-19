@@ -8,9 +8,6 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 
 - **Multiplayer Gameplay**: Explore dungeons with other players in real-time
 - **Player Interaction**: See other players move through the dungeon, chat with them, and share items
-- **Leaderboards**: Compete with other players and view rankings
-- **Cross-Platform**: Supports Android and Desktop platforms
-- **Web Dashboard**: View game statistics and player information via the web interface
 
 ## Download
 
@@ -40,7 +37,7 @@ Special thanks to:
 
 This is a fan-made multiplayer modification and is not officially affiliated with or endorsed by the original Shattered Pixel Dungeon developers.
 
-NOW ALL CHANGES WILL BI COMMITED TO `master` BRANCH
+NOW ALL CHANGES WILL BE COMMITED TO `master` BRANCH
 
 Version 1 and 1.1 based on game version 3.3.8.  
 Version 2 (indev) based on game version 4.0.0.  
