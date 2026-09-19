@@ -9,8 +9,6 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 - **Multiplayer Gameplay**: Explore dungeons with other players in real-time
 - **Player Interaction**: See other players move through the dungeon, chat with them, and share items
 
-## Download
-
 ## 📥 Downloads
 
 [![Latest Release](https://img.shields.io/github/v/release/KlevVid1/New-SPDNet-FIXED?style=for-the-badge&logo=github&logoColor=white&color=success&label=Download%20Latest%20APK)](https://github.com/KlevVid1/New-SPDNet-FIXED/releases/latest)
@@ -22,7 +20,7 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 
 - Original Pixel Dungeon by [Watabou](https://watabou.itch.io/)
 - Shattered Pixel Dungeon by [Evan Debenham](https://shatteredpixel.com/)
-- Fixed New-SPDNet by [KlevVid](https://github.com/KlevVid1)
+- Fix [New-SPDNet](https://github.com/Not-Name-Dev-Team/New-SPDNet) by [KlevVid](https://github.com/KlevVid1)
 
 ## License
 
