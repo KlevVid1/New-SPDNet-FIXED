@@ -52,7 +52,7 @@ public class VaultFlameTraps extends Blob {
 	//always gives a warning, via the blob
 
 	@Override
-	public boolean act() {
+	public synchronized boolean act() {
 		super.act();
 
 		if (afterTriggerCooldowns != null) {

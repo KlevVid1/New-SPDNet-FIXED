@@ -167,6 +167,9 @@ public class NetHero extends Hero {
 			sprite.move(pos, newPos);
 		}
 		pos = newPos;
+		if (Dungeon.level != null && Dungeon.level.insideMap(newPos)) {
+			Dungeon.level.occupyCell(this);
+		}
 	}
 
 	@Override

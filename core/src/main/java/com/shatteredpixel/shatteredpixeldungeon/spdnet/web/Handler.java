@@ -397,6 +397,22 @@ public class Handler {
 		NetHero.syncWithCurrentLevel();
 	}
 
+	public static void stepActiveBlobs() {
+		if (Dungeon.level == null || Dungeon.level.blobs == null) return;
+		try {
+			ArrayList<Blob> activeBlobs = new ArrayList<>(Dungeon.level.blobs.values());
+			for (Blob blob : activeBlobs) {
+				if (blob != null && blob.volume > 0) {
+					synchronized (blob) {
+						blob.act();
+					}
+				}
+			}
+		} catch (Exception e) {
+			NLog.w("stepActiveBlobs error: " + e.getMessage());
+		}
+	}
+
 	public static void handlePlayerMove(SPlayerMove playerMove) {
 		if (!playerMove.getName().equals(Net.name)) {
 			Player player = Net.playerList.get(playerMove.getName());
@@ -420,6 +436,9 @@ public class Handler {
 					} else {
 						player1.pos = playerMove.getPos();
 					}
+				}
+				if (status.getDepth() == Dungeon.floorId()) {
+					stepActiveBlobs();
 				}
 			});
 		}

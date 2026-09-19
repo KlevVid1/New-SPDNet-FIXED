@@ -814,14 +814,30 @@ public class Hero extends Char {
 		}
 	}
 
+	private boolean justMoved = false;
+
+	private void onTurnSpent(float time) {
+		if (time <= 0) return;
+		if (this != Dungeon.hero) return;
+		if (justMoved) {
+			justMoved = false;
+			return;
+		}
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			Sender.sendPlayerMove(new CPlayerMove(pos));
+		}
+	}
+
 	@Override
 	public void spend( float time ) {
 		super.spend(time);
+		onTurnSpent(time);
 	}
 
 	@Override
 	public void spendConstant(float time) {
 		super.spendConstant(time);
+		onTurnSpent(time);
 	}
 
 	public void spendAndNextConstant(float time ) {
@@ -2348,6 +2364,7 @@ public class Hero extends Char {
 		super.move( step, travelling);
 
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+			justMoved = true;
 			Sender.sendPlayerMove(new CPlayerMove(pos));
 		}
 		
