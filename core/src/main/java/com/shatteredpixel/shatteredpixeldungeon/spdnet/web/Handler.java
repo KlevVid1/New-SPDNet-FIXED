@@ -949,7 +949,7 @@ public class Handler {
 			NetHero sender = NetHero.getPlayerFromDungeon(msg.getName());
 			if (sender != null && sender.sprite != null && sender.sprite.parent != null) {
 				sender.sprite.zap(targetPos);
-				finalItem.throwSound();
+				playRemoteThrowSound(sender, targetPos, finalItem);
 				Char enemy = Actor.findChar(targetPos);
 				if (enemy != null && enemy.sprite != null) {
 					((MissileSprite) sender.sprite.parent.recycle(MissileSprite.class)).reset(
@@ -991,6 +991,35 @@ public class Handler {
 				return null;
 			}
 		}
+	}
+
+	private static void playRemoteThrowSound(NetHero sender, int targetPos, Item item) {
+		if (Dungeon.level == null || Dungeon.hero == null) return;
+		int heroPos = Dungeon.hero.pos;
+		int soundPos = (sender != null && sender.pos >= 0) ? sender.pos : targetPos;
+		if (!Dungeon.level.insideMap(soundPos)) return;
+
+		boolean inFOV = (sender != null && sender.pos >= 0 && Dungeon.level.insideMap(sender.pos) && Dungeon.level.heroFOV[sender.pos])
+				|| (Dungeon.level.insideMap(targetPos) && Dungeon.level.heroFOV[targetPos]);
+		int dist = Dungeon.level.distance(heroPos, soundPos);
+
+		// Если бросок происходит далеко вне зоны видимости (больше 10 клеток) — звук не воспроизводится
+		if (!inFOV && dist > 10) {
+			return;
+		}
+
+		// Затухание громкости в зависимости от расстояния (вплотную ~0.35, на границе видимости ~0.08)
+		float baseVol = 0.35f * Math.max(0.12f, 1f - (dist / 12f));
+
+		// Панорамирование влево/вправо относительно игрока
+		int heroX = heroPos % Dungeon.level.width();
+		int soundX = soundPos % Dungeon.level.width();
+		float pan = Math.max(-0.85f, Math.min(0.85f, (soundX - heroX) / 8f));
+
+		float leftVol = baseVol * (1f - Math.max(0f, pan));
+		float rightVol = baseVol * (1f + Math.min(0f, pan));
+
+		Sample.INSTANCE.play(Assets.Sounds.MISS, leftVol, rightVol, 1.5f);
 	}
 
 	private static void onRemoteMissileLanded(Item item, int targetPos) {

@@ -177,16 +177,6 @@ public class NetHero extends Hero {
 			}
 		}
 		pos = newPos;
-		if (Dungeon.level != null && Dungeon.level.insideMap(newPos)) {
-			Dungeon.level.occupyCell(this);
-			if (Dungeon.level.map[newPos] == com.shatteredpixel.shatteredpixeldungeon.levels.Terrain.DOOR) {
-				com.shatteredpixel.shatteredpixeldungeon.levels.features.Door.enter(newPos);
-			}
-			com.shatteredpixel.shatteredpixeldungeon.plants.Plant plant = Dungeon.level.plants.get(newPos);
-			if (plant != null) {
-				plant.trigger();
-			}
-		}
 	}
 
 	@Override

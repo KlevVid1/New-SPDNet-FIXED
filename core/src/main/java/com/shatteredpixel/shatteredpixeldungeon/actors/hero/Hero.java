@@ -1715,7 +1715,7 @@ public class Hero extends Char {
 		// The flash intensity increases primarily based on damage taken and secondarily on missing HP.
 		float flashIntensity = 0.25f * (percentDMG * percentDMG) / percentHP;
 		//if the intensity is very low don't flash at all
-		if (flashIntensity >= 0.05f){
+		if (this == Dungeon.hero && flashIntensity >= 0.05f){
 			flashIntensity = Math.min(1/3f, flashIntensity); //cap intensity at 1/3
 			GameScene.flash( (int)(0xFF*flashIntensity) << 16 );
 			if (isAlive()) {

@@ -391,6 +391,13 @@ public abstract class Actor implements Bundlable {
 			if (ch.pos == pos)
 				return ch;
 		}
+		if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level != null && com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.players != null) {
+			for (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero hero : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.players) {
+				if (hero != null && hero.pos == pos) {
+					return hero;
+				}
+			}
+		}
 		return null;
 	}
 
