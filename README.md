@@ -1,6 +1,6 @@
 # SPDNet (Shattered Pixel Dungeon Online)
 
-SPDNet is a multiplayer online version of [Shattered Pixel Dungeon](https://shatteredpixel.com/shatteredpd/), an open-source traditional roguelike dungeon crawler with randomized levels and enemies, and hundreds of items to collect and use. It's based on the [source code of Pixel Dungeon](https://github.com/00-Evan/pixel-dungeon-gradle), by [Watabou](https://watabou.itch.io/).
+SPDNet is a LAN multiplayer version of [Shattered Pixel Dungeon](https://shatteredpixel.com/shatteredpd/), an open-source traditional roguelike dungeon crawler with randomized levels and enemies, and hundreds of items to collect and use. It's based on the [source code of Pixel Dungeon](https://github.com/00-Evan/pixel-dungeon-gradle), by [Watabou](https://watabou.itch.io/).
 
 This project adds multiplayer functionality to the classic Shattered Pixel Dungeon experience, allowing players to explore dungeons together, chat, and share their adventures in real-time.
 
@@ -8,6 +8,7 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 
 - **Multiplayer Gameplay**: Explore dungeons with other players in real-time
 - **Player Interaction**: See other players move through the dungeon, chat with them, and share items
+- **Cross-platform**: Android, Windows and Linux support
 
 ## 📥 Downloads
 
