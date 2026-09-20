@@ -1019,7 +1019,7 @@ public abstract class Mob extends Char {
 			GameScene.updateFog(pos, 2);
 		}
 
-		if (Dungeon.hero.isAlive()) {
+		if (Dungeon.hero.isAlive() && !isNetRemote) {
 			
 			if (alignment == Alignment.ENEMY) {
 				Statistics.enemiesSlain++;
@@ -1075,7 +1075,7 @@ public abstract class Mob extends Char {
 			EXP /= 2;
 		}
 
-		if (alignment == Alignment.ENEMY){
+		if (alignment == Alignment.ENEMY && !isNetRemote){
 			if (buff(Trap.HazardAssistTracker.class) != null){
 				Statistics.hazardAssistedKills++;
 				Badges.validateHazardAssists();
@@ -1098,7 +1098,7 @@ public abstract class Mob extends Char {
 
 		}
 
-		if (Dungeon.hero.isAlive() && !Dungeon.level.heroFOV[pos]) {
+		if (Dungeon.hero.isAlive() && !isNetRemote && !Dungeon.level.heroFOV[pos]) {
 			GLog.i( Messages.get(this, "died") );
 		}
 
@@ -1106,7 +1106,7 @@ public abstract class Mob extends Char {
 
 		super.die( cause );
 
-		if (!(this instanceof Wraith)
+		if (!isNetRemote && !(this instanceof Wraith)
 				&& soulMarked
 				&& Random.Float() < (0.4f*Dungeon.hero.pointsInTalent(Talent.NECROMANCERS_MINIONS)/3f)){
 			Wraith w = Wraith.spawnAt(pos, Wraith.class);

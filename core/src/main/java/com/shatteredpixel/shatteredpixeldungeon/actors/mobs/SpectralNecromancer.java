@@ -74,6 +74,7 @@ public class SpectralNecromancer extends Necromancer {
 		for (int ID : wraithIDs){
 			Actor a = Actor.findById(ID);
 			if (a instanceof Wraith && ((Wraith) a).alignment == alignment){
+				if (isNetRemote) ((Wraith) a).isNetRemote = true;
 				((Wraith) a).die(null);
 			}
 		}

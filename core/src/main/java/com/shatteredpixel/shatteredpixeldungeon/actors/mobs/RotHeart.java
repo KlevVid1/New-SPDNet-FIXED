@@ -99,6 +99,7 @@ public class RotHeart extends Mob {
 		Bestiary.skipCountingEncounters = true;
 		for (Mob mob : Dungeon.level.mobs.toArray(new Mob[Dungeon.level.mobs.size()])){
 			if (mob instanceof RotLasher){
+				if (isNetRemote) mob.isNetRemote = true;
 				mob.die(null);
 			}
 		}
@@ -110,7 +111,9 @@ public class RotHeart extends Mob {
 		super.die(cause);
 		Dungeon.level.drop( new Rotberry.Seed(), pos ).sprite.drop();
 		//assign score here as player may choose to keep the rotberry seed
-		Statistics.questScores[1] += 2000;
+		if (!isNetRemote) {
+			Statistics.questScores[1] += 2000;
+		}
 	}
 
 	@Override

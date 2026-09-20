@@ -575,6 +575,7 @@ public class DwarfKing extends Mob {
 
 		Bestiary.skipCountingEncounters = true;
 		for (Mob m : getSubjects()){
+			if (isNetRemote) m.isNetRemote = true;
 			m.die(null);
 		}
 		Bestiary.skipCountingEncounters = false;

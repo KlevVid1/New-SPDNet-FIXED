@@ -525,6 +525,7 @@ public class YogDzewa extends Mob {
 		Bestiary.skipCountingEncounters = true;
 		for (Mob mob : (Iterable<Mob>)Dungeon.level.mobs.clone()) {
 			if (mob instanceof Larva || mob instanceof YogRipper || mob instanceof YogEye || mob instanceof YogScorpio) {
+				if (isNetRemote) mob.isNetRemote = true;
 				mob.die( cause );
 			}
 		}
