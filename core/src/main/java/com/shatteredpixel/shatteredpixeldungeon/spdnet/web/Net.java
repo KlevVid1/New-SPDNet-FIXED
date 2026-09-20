@@ -67,7 +67,7 @@ public class Net {
 				String encName = java.net.URLEncoder.encode(clientName, "UTF-8");
 				String encPass = java.net.URLEncoder.encode(clientPassword, "UTF-8");
 				String encVer = java.net.URLEncoder.encode(Game.version != null ? Game.version : "4.0.0", "UTF-8");
-				String encNetVer = java.net.URLEncoder.encode(Game.netVersion != null ? Game.netVersion : "2", "UTF-8");
+				String encNetVer = java.net.URLEncoder.encode(Game.netVersion != null ? Game.netVersion : "2.1", "UTF-8");
 				opts.query = "name=" + encName + "&password=" + encPass + "&SPDVersion=" + encVer + "&NetVersion=" + encNetVer;
 				socket = IO.socket(serverUrl, opts);
 			} catch (Throwable e) {

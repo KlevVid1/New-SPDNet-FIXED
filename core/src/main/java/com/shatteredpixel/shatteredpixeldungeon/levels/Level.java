@@ -1016,7 +1016,18 @@ public abstract class Level implements Bundlable {
 		int oldTerrain = level.map[cell];
 		Painter.set(level, cell, terrain);
 
-		if (terrain != Terrain.TRAP && terrain != Terrain.SECRET_TRAP && terrain != Terrain.INACTIVE_TRAP) {
+		if (terrain == Terrain.INACTIVE_TRAP) {
+			com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap trap = level.traps.get(cell);
+			if (trap != null) {
+				trap.active = false;
+				trap.visible = true;
+			}
+		} else if (terrain == Terrain.TRAP) {
+			com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap trap = level.traps.get(cell);
+			if (trap != null) {
+				trap.visible = true;
+			}
+		} else if (terrain != Terrain.SECRET_TRAP) {
 			level.traps.remove(cell);
 		}
 

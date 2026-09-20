@@ -117,7 +117,11 @@ public class WndGame extends Window {
 			@Override
 			protected void onClick() {
 				try {
-					Dungeon.saveAll();
+					if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
+						Dungeon.saveAll();
+					} else {
+						Dungeon.deleteGame(GamesInProgress.curSlot, true);
+					}
 				} catch (IOException e) {
 					ShatteredPixelDungeon.reportException(e);
 				}

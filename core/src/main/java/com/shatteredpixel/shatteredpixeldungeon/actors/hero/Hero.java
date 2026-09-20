@@ -2271,6 +2271,9 @@ public class Hero extends Char {
 	}
 	
 	public static void reallyDie( Object cause ) {
+		if (Dungeon.hero != null) {
+			Dungeon.hero.HP = 0;
+		}
 		
 		int length = Dungeon.level.length();
 		int[] map = Dungeon.level.map;

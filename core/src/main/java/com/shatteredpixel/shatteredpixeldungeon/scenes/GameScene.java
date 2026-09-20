@@ -924,7 +924,11 @@ public class GameScene extends PixelScene {
 	public synchronized void onPause() {
 		try {
 			if (!Dungeon.hero.ready) waitForActorThread(500, false);
-			Dungeon.saveAll();
+			if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
+				Dungeon.saveAll();
+			} else {
+				Dungeon.deleteGame(GamesInProgress.curSlot, true);
+			}
 			Badges.saveGlobal();
 			Journal.saveGlobal();
 		} catch (IOException e) {
@@ -1696,7 +1700,8 @@ public class GameScene extends PixelScene {
 		StyledButton restart = new StyledButton(Chrome.Type.GREY_BUTTON_TR, Messages.get(StartScene.class, "new"), 9){
 			@Override
 			protected void onClick() {
-				GamesInProgress.selectedClass = Dungeon.hero.heroClass;
+				Dungeon.deleteGame(GamesInProgress.curSlot, true);
+				GamesInProgress.selectedClass = Dungeon.hero != null ? Dungeon.hero.heroClass : null;
 				GamesInProgress.curSlot = GamesInProgress.firstEmpty();
 				ShatteredPixelDungeon.switchScene(HeroSelectScene.class);
 			}

@@ -894,16 +894,21 @@ public class Dungeon {
 	}
 	
 	public static void deleteGame( int save, boolean deleteLevels ) {
+		if (save <= 0) {
+			save = GamesInProgress.curSlot > 0 ? GamesInProgress.curSlot : 1;
+		}
 
-		if (deleteLevels) {
-			String folder = GamesInProgress.gameFolder(save);
+		String folder = GamesInProgress.gameFolder(save);
+		if (FileUtils.dirExists(folder)) {
 			for (String file : FileUtils.filesInDir(folder)){
-				if (file.contains("depth")){
+				if (deleteLevels || file.contains("depth") || file.endsWith(".spdtmp")){
 					FileUtils.deleteFile(folder + "/" + file);
 				}
 			}
 		}
 
+		FileUtils.deleteFile(GamesInProgress.gameFile(save) + ".spdtmp");
+		FileUtils.deleteFile(GamesInProgress.gameFile(save));
 		FileUtils.overwriteFile(GamesInProgress.gameFile(save), 1);
 		
 		GamesInProgress.delete( save );
