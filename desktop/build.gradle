@@ -233,7 +233,7 @@ exec "\${HERE}/bin/${appName}" "\$@"
 
         def distDir = file("${buildDirFile}/distributions")
         distDir.mkdirs()
-        def appImageName = "${appName}-v${appVersionName}-x86_64.AppImage"
+        def appImageName = "${appName}-v${appNetVersionName}-linux-x64.AppImage"
         def targetAppImage = file("${distDir}/${appImageName}")
         delete(targetAppImage)
 
@@ -383,7 +383,7 @@ if %errorlevel% neq 0 pause
 """
 
         // 5. Create Zip archive
-        def zipName = "${appName}-v${appVersionName}-windows-x64.zip"
+        def zipName = "${appName}-v${appNetVersionName}-windows-x64.zip"
         def targetZip = file("${rootDir}/${zipName}")
         delete(targetZip)
         println "Compressing ${zipName}..."
@@ -392,12 +392,12 @@ if %errorlevel% neq 0 pause
         zipPb.inheritIO().start().waitFor()
 
         // Also copy standalone EXE to root
-        def rootExe = file("${rootDir}/${appName}-v${appVersionName}-windows.exe")
+        def rootExe = file("${rootDir}/${appName}-v${appNetVersionName}-windows.exe")
         delete(rootExe)
         copy {
             from targetExe
             into rootDir
-            rename { "${appName}-v${appVersionName}-windows.exe" }
+            rename { "${appName}-v${appNetVersionName}-windows.exe" }
         }
 
         println "Windows package successfully created:"

@@ -107,6 +107,27 @@ android {
     }
 }
 
+afterEvaluate {
+    tasks.named('assembleDebug').configure {
+        doLast {
+            def debugDir = file("${layout.buildDirectory.asFile.get()}/outputs/apk/debug")
+            def apk = file("${debugDir}/android-debug.apk")
+            if (apk.exists()) {
+                copy {
+                    from apk
+                    into rootDir
+                    rename { "${appName}-v${appNetVersionName}-android.apk" }
+                }
+                copy {
+                    from apk
+                    into debugDir
+                    rename { "${appName}-v${appNetVersionName}-android.apk" }
+                }
+            }
+        }
+    }
+}
+
 configurations { natives }
 
 dependencies {
