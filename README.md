@@ -41,7 +41,7 @@ Special thanks to:
 This is a fan-made multiplayer modification and is not officially affiliated with or endorsed by the original Shattered Pixel Dungeon developers.
 
 > [!IMPORTANT]
-> **Current Platform Status:** Currently, only the **Android** build is stable. Work is currently underway to support desktops.
+> **Current Platform Status:** Currently, only the **Android** build is stable. Desktop may be unstable.
 
 ## Compatibility & Branches
 
