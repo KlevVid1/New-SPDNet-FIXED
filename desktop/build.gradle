@@ -125,8 +125,133 @@ runtime {
             }
         }
     }
-
 }
+
+tasks.register('appImage') {
+    group = 'distribution'
+    description = 'Creates a standalone x86_64 AppImage for Linux'
+    dependsOn 'jpackageImage'
+
+    doLast {
+        def buildDirFile = layout.buildDirectory.asFile.get()
+        def rootBuildDirFile = rootProject.layout.buildDirectory.asFile.get()
+        def jpackageDir = file("${buildDirFile}/jpackage/${appName}")
+        if (!jpackageDir.exists()) {
+            throw new GradleException("jpackage directory not found at ${jpackageDir}. Run jpackageImage first.")
+        }
+
+        def appDir = file("${buildDirFile}/appimage/AppDir")
+        delete(appDir)
+        appDir.mkdirs()
+
+        // Copy bin and lib
+        copy {
+            from "${jpackageDir}/bin"
+            into "${appDir}/bin"
+        }
+        copy {
+            from "${jpackageDir}/lib"
+            into "${appDir}/lib"
+        }
+
+        // Make sure launcher binary is executable
+        file("${appDir}/bin/${appName}").setExecutable(true, false)
+
+        // Copy icons
+        def iconFile = file("src/main/assets/icons/icon_256.png")
+        copy {
+            from iconFile
+            into appDir
+            rename { "spdnet.png" }
+        }
+        copy {
+            from iconFile
+            into appDir
+            rename { ".DirIcon" }
+        }
+
+        // Desktop entry
+        def desktopFile = file("${appDir}/spdnet.desktop")
+        desktopFile.text = """[Desktop Entry]
+Name=${appName}
+GenericName=Pixel Dungeon
+Comment=Multiplayer mod for Shattered Pixel Dungeon
+Exec=${appName} %U
+Icon=spdnet
+Terminal=false
+Type=Application
+Categories=Game;RolePlaying;
+"""
+
+        // AppRun
+        def appRunFile = file("${appDir}/AppRun")
+        appRunFile.text = """#!/bin/sh
+set -e
+HERE="\$(dirname "\$(readlink -f "\${0}")")"
+exec "\${HERE}/bin/${appName}" "\$@"
+"""
+        appRunFile.setExecutable(true, false)
+
+        // Tooling: appimagetool
+        def toolsDir = file("${rootBuildDirFile}/tools")
+        toolsDir.mkdirs()
+        def appimagetoolAppDir = file("${toolsDir}/appimagetool.AppDir")
+        def appimagetoolExecutable = file("${appimagetoolAppDir}/AppRun")
+
+        if (!appimagetoolExecutable.exists()) {
+            println "Downloading appimagetool..."
+            def appimageToolFile = file("${toolsDir}/appimagetool-x86_64.AppImage")
+            if (!appimageToolFile.exists()) {
+                def client = java.net.http.HttpClient.newBuilder()
+                        .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+                        .build()
+                def request = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create("https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"))
+                        .build()
+                client.send(request, java.net.http.HttpResponse.BodyHandlers.ofFile(appimageToolFile.toPath()))
+                appimageToolFile.setExecutable(true, false)
+            }
+            // Extract appimagetool to avoid FUSE dependency during build
+            def extractPb = new ProcessBuilder(appimageToolFile.absolutePath, '--appimage-extract')
+            extractPb.directory(toolsDir)
+            extractPb.inheritIO()
+            def extractProc = extractPb.start()
+            int extractCode = extractProc.waitFor()
+            if (extractCode != 0) {
+                throw new GradleException("Extracting appimagetool failed with exit code ${extractCode}")
+            }
+            file("${toolsDir}/squashfs-root").renameTo(appimagetoolAppDir)
+            appimagetoolExecutable.setExecutable(true, false)
+        }
+
+        def distDir = file("${buildDirFile}/distributions")
+        distDir.mkdirs()
+        def appImageName = "${appName}-v${appVersionName}-x86_64.AppImage"
+        def targetAppImage = file("${distDir}/${appImageName}")
+        delete(targetAppImage)
+
+        println "Packaging AppImage with appimagetool..."
+        def packPb = new ProcessBuilder(appimagetoolExecutable.absolutePath, appDir.absolutePath, targetAppImage.absolutePath)
+        packPb.environment().put('ARCH', 'x86_64')
+        packPb.inheritIO()
+        def packProc = packPb.start()
+        int packCode = packProc.waitFor()
+        if (packCode != 0) {
+            throw new GradleException("Packaging AppImage failed with exit code ${packCode}")
+        }
+
+        // Copy to root directory for easy access
+        def rootAppImage = file("${rootDir}/${appImageName}")
+        delete(rootAppImage)
+        copy {
+            from targetAppImage
+            into rootDir
+        }
+
+        println "AppImage successfully created: ${rootAppImage.absolutePath}"
+    }
+}
+
 
 dependencies {
     implementation project(':core')

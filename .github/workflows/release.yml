@@ -144,9 +144,9 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      # desktop 的可运行 jar 任务是 :desktop:release（内含 Main-Class 与依赖）
-      - name: Build desktop jar
-        run: ./gradlew :desktop:release --no-daemon
+      # desktop 的可运行 jar 任务是 :desktop:release，AppImage 任务是 :desktop:appImage
+      - name: Build desktop jar and AppImage
+        run: ./gradlew :desktop:release :desktop:appImage --no-daemon
 
       - name: Download release-info
         uses: actions/download-artifact@v5
@@ -154,19 +154,25 @@ jobs:
           name: release-info
           path: info
 
-      - name: Rename jar with version
+      - name: Rename artifacts with version
         run: |
           VER=$(jq -r '.tag' info/release-info.json)
           mkdir -p dist
           JAR=$(ls desktop/build/libs/*.jar | head -1)
           [ -n "$JAR" ] || { echo "未找到 desktop jar"; exit 1; }
           cp "$JAR" "dist/SPDNet-desktop-${VER}.jar"
+          APPIMAGE=$(ls desktop/build/distributions/*.AppImage | head -1)
+          if [ -n "$APPIMAGE" ]; then
+            cp "$APPIMAGE" "dist/SPDNet-desktop-${VER}-x86_64.AppImage"
+          fi
 
-      - name: Upload desktop jar artifact
+      - name: Upload desktop artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: desktop-jar
-          path: dist/*.jar
+          name: desktop-artifacts
+          path: |
+            dist/*.jar
+            dist/*.AppImage
 
   # GitHub release + 上传 APK
   # needs desktop 以等待 desktop 构建完成；加 if 显式放行 desktop 被跳过的情况（否则跳过会连坐跳过本 job）
@@ -186,7 +192,7 @@ jobs:
         if: ${{ needs.desktop.result == 'success' }}
         uses: actions/download-artifact@v5
         with:
-          name: desktop-jar
+          name: desktop-artifacts
           path: dist
 
       - name: Download release-info
@@ -227,7 +233,7 @@ jobs:
         if: ${{ needs.desktop.result == 'success' }}
         uses: actions/download-artifact@v5
         with:
-          name: desktop-jar
+          name: desktop-artifacts
           path: dist
 
       - name: Download release-info
