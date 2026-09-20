@@ -135,6 +135,7 @@ public abstract class Mob extends Char {
 	// SPDNet Co-op: Сетевая синхронизация мобов
 	public int syncId = 0;
 	public boolean isNetRemote = false;
+	public boolean isNetRemoteAttack = false;
 
 	public static Mob findBySyncId(int syncId, int fallbackPos) {
 		if (Dungeon.level == null || Dungeon.level.mobs == null) return null;
@@ -841,6 +842,11 @@ public abstract class Mob extends Char {
 	
 	@Override
 	public void onAttackComplete() {
+		if (isNetRemoteAttack) {
+			isNetRemoteAttack = false;
+			super.onAttackComplete();
+			return;
+		}
 		attack( enemy );
 		Invisibility.dispel(this);
 		spend( attackDelay() );

@@ -135,7 +135,16 @@ public class Ghost extends NPC {
 		if (c != Dungeon.hero){
 			return super.interact(c);
 		}
-		
+
+		if (!Quest.given && Dungeon.level != null) {
+			for (Mob m : Dungeon.level.mobs) {
+				if (m instanceof FetidRat || m instanceof GnollTrickster || m instanceof GreatCrab) {
+					Quest.given = true;
+					break;
+				}
+			}
+		}
+
 		if (Quest.given) {
 			if (Quest.weapon != null) {
 				if (Quest.processed) {
@@ -219,7 +228,7 @@ public class Ghost extends NPC {
 
 		private static int type;
 
-		private static boolean given;
+		public static boolean given;
 		private static boolean processed;
 		
 		private static int depth;

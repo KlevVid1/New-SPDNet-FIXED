@@ -401,22 +401,6 @@ public class Handler {
 		NetHero.syncWithCurrentLevel();
 	}
 
-	public static void stepActiveBlobs() {
-		if (Dungeon.level == null || Dungeon.level.blobs == null) return;
-		try {
-			ArrayList<Blob> activeBlobs = new ArrayList<>(Dungeon.level.blobs.values());
-			for (Blob blob : activeBlobs) {
-				if (blob != null && blob.volume > 0) {
-					synchronized (blob) {
-						blob.act();
-					}
-				}
-			}
-		} catch (Exception e) {
-			NLog.w("stepActiveBlobs error: " + e.getMessage());
-		}
-	}
-
 	public static void handlePlayerMove(SPlayerMove playerMove) {
 		if (!playerMove.getName().equals(Net.name)) {
 			Player player = Net.playerList.get(playerMove.getName());
@@ -442,9 +426,6 @@ public class Handler {
 					}
 				} else if (status.getDepth() == Dungeon.floorId()) {
 					NetHero.addPlayerToDungeon(player);
-				}
-				if (status.getDepth() == Dungeon.floorId()) {
-					stepActiveBlobs();
 				}
 			});
 		}
@@ -735,24 +716,6 @@ public class Handler {
 		}
 		Game.runOnRenderThread(() -> {
 			Mob mob = Mob.findBySyncId(mobMove.getSyncId(), mobMove.getFromPos());
-			if (mob == null && mobMove.getMobClass() != null && !mobMove.getMobClass().isEmpty()) {
-				// Автоматически спавним отсутствующего моба на клиенте
-				try {
-					Class<?> cl = Class.forName(mobMove.getMobClass());
-					mob = (Mob) Reflection.newInstance(cl);
-					if (mob != null) {
-						mob.syncId = mobMove.getSyncId();
-						mob.pos = mobMove.getToPos();
-						if (mobMove.getHp() > 0) mob.HP = mobMove.getHp();
-						if (mobMove.getHt() > 0) mob.HT = mobMove.getHt();
-						if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-							GameScene.add(mob);
-						} else if (Dungeon.level != null) {
-							Dungeon.level.mobs.add(mob);
-						}
-					}
-				} catch (Exception ignored) {}
-			}
 			if (mob != null && mob.isAlive()) {
 				mob.isNetRemote = true;
 				try {
@@ -797,26 +760,11 @@ public class Handler {
 		}
 		Game.runOnRenderThread(() -> {
 			Mob mob = Mob.findBySyncId(mobAttack.getSyncId(), -1);
-			if (mob == null && mobAttack.getMobClass() != null && !mobAttack.getMobClass().isEmpty()) {
-				// Автоматически спавним моба, наносящего урон, если он ещё не появился на клиенте
-				try {
-					Class<?> cl = Class.forName(mobAttack.getMobClass());
-					mob = (Mob) Reflection.newInstance(cl);
-					if (mob != null) {
-						mob.syncId = mobAttack.getSyncId();
-						mob.pos = mobAttack.getMobPos() >= 0 ? mobAttack.getMobPos() : mobAttack.getTargetPos();
-						if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-							GameScene.add(mob);
-						} else if (Dungeon.level != null) {
-							Dungeon.level.mobs.add(mob);
-						}
-					}
-				} catch (Exception ignored) {}
-			}
 			if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
 				((Mimic) mob).stopHiding();
 			}
 			if (mob != null && mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
+				mob.isNetRemoteAttack = true;
 				mob.sprite.attack(mobAttack.getTargetPos());
 			}
 		});
@@ -845,12 +793,17 @@ public class Handler {
 					mob.pos = mobSpawn.getPos();
 					mob.HT = mobSpawn.getHt();
 					mob.HP = mobSpawn.getHp();
+					if (mob instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.FetidRat
+							|| mob instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollTrickster
+							|| mob instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GreatCrab) {
+						com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost.Quest.given = true;
+					}
 					if (ShatteredPixelDungeon.scene() instanceof GameScene) {
 						GameScene.add(mob);
 					} else if (Dungeon.level != null) {
 						Dungeon.level.mobs.add(mob);
 					}
-					Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, mob.syncId);
+					Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, mob.syncId % 100000);
 				}
 			} catch (Exception e) {
 				// silent

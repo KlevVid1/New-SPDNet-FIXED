@@ -1297,11 +1297,14 @@ public class GameScene extends PixelScene {
 	public static void add( Mob mob, float delay ) {
 		Dungeon.level.mobs.add( mob );
 
-		// SPDNet Co-op: При динамическом спавне моба на хосте выдаём ему syncId и уведомляем клиентов
+		// SPDNet Co-op: При динамическом спавне моба выдаём ему syncId и уведомляем других игроков
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
-				&& com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()
 				&& mob.syncId == 0 && Dungeon.level != null) {
-			mob.syncId = ++Dungeon.level.maxMobSyncId;
+			if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+				mob.syncId = ++Dungeon.level.maxMobSyncId;
+			} else {
+				mob.syncId = 100000 + (++Dungeon.level.maxMobSyncId);
+			}
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobSpawn(
 					Dungeon.floorId(), mob.syncId, mob.getClass().getName(), mob.pos, mob.HP, mob.HT);
 		}
