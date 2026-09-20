@@ -259,6 +259,154 @@ exec "\${HERE}/bin/${appName}" "\$@"
     }
 }
 
+tasks.register('windowsPackage') {
+    group = 'distribution'
+    description = 'Creates a standalone Windows x64 package with .exe and bundled JRE'
+    dependsOn 'release'
+
+    doLast {
+        def buildDirFile = layout.buildDirectory.asFile.get()
+        def rootBuildDirFile = rootProject.layout.buildDirectory.asFile.get()
+        def releaseJarFile = file("${buildDirFile}/libs/${project.name}-${appVersionName}}2.jar")
+        if (!releaseJarFile.exists()) {
+            releaseJarFile = file("${buildDirFile}/libs").listFiles()?.find { it.name.endsWith('.jar') }
+        }
+        if (!releaseJarFile || !releaseJarFile.exists()) {
+            throw new GradleException("Release jar not found. Run :desktop:release first.")
+        }
+
+        // 1. Setup Launch4j tooling
+        def toolsDir = file("${rootBuildDirFile}/tools")
+        toolsDir.mkdirs()
+        def launch4jDir = file("${toolsDir}/launch4j")
+        def launch4jScript = file("${launch4jDir}/launch4jc")
+
+        if (!launch4jScript.exists()) {
+            println "Downloading Launch4j for Linux..."
+            def pb = new ProcessBuilder('aria2c', '-c', '-x', '8', '-s', '8',
+                    'https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-linux-x64.tgz/download',
+                    '-o', 'launch4j.tgz')
+            pb.directory(toolsDir)
+            pb.inheritIO().start().waitFor()
+            def tarPb = new ProcessBuilder('tar', '-xzf', 'launch4j.tgz')
+            tarPb.directory(toolsDir)
+            tarPb.inheritIO().start().waitFor()
+            file("${launch4jDir}/launch4jc").text = file("${launch4jDir}/launch4jc").text.replaceAll('\r\n', '\n')
+            file("${launch4jDir}/launch4jc").setExecutable(true, false)
+            file("${launch4jDir}/bin").listFiles()?.each { it.setExecutable(true, false) }
+        }
+
+        // 2. Setup Windows JDK 17
+        def winJdkDir = file("${buildDirFile}/jdks/win/jdk-17.0.17+10")
+        if (!winJdkDir.exists()) {
+            println "Downloading Windows JDK 17..."
+            def winJdkParent = file("${buildDirFile}/jdks/win")
+            winJdkParent.mkdirs()
+            def pb = new ProcessBuilder('aria2c', '-c', '-x', '8', '-s', '8',
+                    'https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.17%2B10/OpenJDK17U-jdk_x64_windows_hotspot_17.0.17_10.zip',
+                    '-o', 'win-jdk.zip')
+            pb.directory(winJdkParent)
+            pb.inheritIO().start().waitFor()
+            def unzipPb = new ProcessBuilder('7z', 'x', 'win-jdk.zip')
+            unzipPb.directory(winJdkParent)
+            unzipPb.inheritIO().start().waitFor()
+            file("${winJdkParent}/win-jdk.zip").delete()
+        }
+
+        // 3. Build Windows JRE using jlink
+        def winJreDir = file("${buildDirFile}/win-jre")
+        if (!winJreDir.exists()) {
+            println "Creating modular Windows JRE with jlink..."
+            def jlinkPb = new ProcessBuilder('jlink',
+                    '--module-path', "${winJdkDir.absolutePath}/jmods",
+                    '--add-modules', 'java.base,java.desktop,java.logging,java.naming,java.xml,java.net.http,java.sql,jdk.unsupported,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.naming.dns,jdk.management',
+                    '--strip-debug',
+                    '--compress', '2',
+                    '--no-header-files',
+                    '--no-man-pages',
+                    '--output', winJreDir.absolutePath)
+            jlinkPb.inheritIO().start().waitFor()
+        }
+
+        // 4. Build Windows EXE and folder
+        def distDir = file("${buildDirFile}/windows-dist")
+        def appDir = file("${distDir}/${appName}")
+        delete(appDir)
+        appDir.mkdirs()
+
+        def iconFile = file("src/main/assets/icons/windows.ico")
+        def targetExe = file("${appDir}/${appName}.exe")
+
+        def l4jXml = file("${distDir}/l4j.xml")
+        l4jXml.text = """<launch4jConfig>
+  <headerType>gui</headerType>
+  <jar>${releaseJarFile.absolutePath}</jar>
+  <dontWrapJar>false</dontWrapJar>
+  <outfile>${targetExe.absolutePath}</outfile>
+  <errTitle>${appName}</errTitle>
+  <chdir>.</chdir>
+  <icon>${iconFile.absolutePath}</icon>
+  <jre>
+    <path>jre</path>
+    <requires64Bit>true</requires64Bit>
+    <minVersion>17</minVersion>
+    <opt>-XX:+IgnoreUnrecognizedVMOptions</opt>
+  </jre>
+  <versionInfo>
+    <fileVersion>4.0.0.0</fileVersion>
+    <txtFileVersion>${appVersionName}</txtFileVersion>
+    <fileDescription>${appName} - Multiplayer Shattered Pixel Dungeon</fileDescription>
+    <copyright>Shattered Pixel Dungeon / SPDNet</copyright>
+    <productVersion>4.0.0.0</productVersion>
+    <txtProductVersion>${appVersionName}</txtProductVersion>
+    <productName>${appName}</productName>
+    <internalName>${appName}</internalName>
+    <originalFilename>${appName}.exe</originalFilename>
+  </versionInfo>
+</launch4jConfig>
+"""
+
+        println "Generating Windows executable with Launch4j..."
+        def l4jPb = new ProcessBuilder(launch4jScript.absolutePath, l4jXml.absolutePath)
+        l4jPb.inheritIO().start().waitFor()
+
+        copy {
+            from winJreDir
+            into "${appDir}/jre"
+        }
+
+        def consoleBat = file("${appDir}/run-debug-console.bat")
+        consoleBat.text = """@echo off
+echo Starting ${appName} in console mode...
+"%~dp0jre\\bin\\java.exe" -jar "%~dp0${appName}.exe"
+if %errorlevel% neq 0 pause
+"""
+
+        // 5. Create Zip archive
+        def zipName = "${appName}-v${appVersionName}-windows-x64.zip"
+        def targetZip = file("${rootDir}/${zipName}")
+        delete(targetZip)
+        println "Compressing ${zipName}..."
+        def zipPb = new ProcessBuilder('7z', 'a', '-tzip', '-mx=7', targetZip.absolutePath, appName)
+        zipPb.directory(distDir)
+        zipPb.inheritIO().start().waitFor()
+
+        // Also copy standalone EXE to root
+        def rootExe = file("${rootDir}/${appName}-v${appVersionName}-windows.exe")
+        delete(rootExe)
+        copy {
+            from targetExe
+            into rootDir
+            rename { "${appName}-v${appVersionName}-windows.exe" }
+        }
+
+        println "Windows package successfully created:"
+        println "1. ${targetZip.absolutePath}"
+        println "2. ${rootExe.absolutePath}"
+    }
+}
+
+
 
 dependencies {
     implementation project(':core')

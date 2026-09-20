@@ -1,7 +1,8 @@
 # Built application files
 *.apk
 *.AppImage
-
+*.exe
+*-windows-x64.zip
 # Files for the Dalvik VM
 *.dex
 
