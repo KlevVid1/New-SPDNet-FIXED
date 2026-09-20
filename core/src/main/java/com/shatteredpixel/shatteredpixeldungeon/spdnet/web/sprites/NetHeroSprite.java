@@ -129,7 +129,10 @@ public class NetHeroSprite extends CharSprite {
 	@Override
 	public void update() {
 		sleeping = ch.isAlive() && ((Hero) ch).resting;
-
+		if (!isMoving && Dungeon.level != null && ch != null && Dungeon.level.heroFOV != null
+				&& ch.pos >= 0 && ch.pos < Dungeon.level.heroFOV.length) {
+			visible = visibleOutOfFFOV || Dungeon.level.heroFOV[ch.pos];
+		}
 		super.update();
 	}
 

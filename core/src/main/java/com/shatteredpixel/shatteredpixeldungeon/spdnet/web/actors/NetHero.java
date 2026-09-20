@@ -151,6 +151,9 @@ public class NetHero extends Hero {
 		super.onMotionComplete();
 		if (sprite != null) {
 			sprite.place(pos);
+			if (Dungeon.level != null && Dungeon.level.insideMap(pos)) {
+				sprite.visible = sprite.visibleOutOfFFOV || Dungeon.level.heroFOV[pos];
+			}
 			if (sprite.looping()) {
 				sprite.idle();
 			}
@@ -173,7 +176,9 @@ public class NetHero extends Hero {
 				sprite.move(pos, newPos);
 			}
 			if (Dungeon.level != null && Dungeon.level.insideMap(newPos)) {
-				sprite.visible = Dungeon.level.heroFOV[newPos];
+				sprite.visible = sprite.visibleOutOfFFOV
+						|| Dungeon.level.heroFOV[newPos]
+						|| (Dungeon.level.insideMap(pos) && Dungeon.level.heroFOV[pos]);
 			}
 		}
 		pos = newPos;

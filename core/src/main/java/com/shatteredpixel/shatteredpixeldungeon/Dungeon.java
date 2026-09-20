@@ -1010,6 +1010,15 @@ public class Dungeon {
 				//updates adjacent cells too
 				GameScene.updateFog(m.pos, 2);
 			}
+			if (level.players != null) {
+				for (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero p : level.players.toArray(new com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero[0])) {
+					if (p == null || !p.isAlive() || !level.insideMap(p.pos)) continue;
+					BArray.or( level.visited, level.heroFOV, p.pos - 1 - level.width(), 3, level.visited );
+					BArray.or( level.visited, level.heroFOV, p.pos - 1, 3, level.visited );
+					BArray.or( level.visited, level.heroFOV, p.pos - 1 + level.width(), 3, level.visited );
+					GameScene.updateFog(p.pos, 2);
+				}
+			}
 		}
 
 		if (hero.buff(Awareness.class) != null){

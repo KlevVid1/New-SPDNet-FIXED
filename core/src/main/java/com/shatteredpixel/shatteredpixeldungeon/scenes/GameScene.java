@@ -1186,7 +1186,7 @@ public class GameScene extends PixelScene {
 
 	private synchronized void addPlayerSprite(NetHero player) {
 		CharSprite sprite = new NetHeroSprite(player);
-		sprite.visible = true;
+		sprite.visible = Dungeon.level != null && Dungeon.level.insideMap(player.pos) && Dungeon.level.heroFOV[player.pos];
 		players.add(sprite);
 	}
 
@@ -1646,6 +1646,14 @@ public class GameScene extends PixelScene {
 				if (mob instanceof Ghoul){
 					for (Ghoul.GhoulLifeLink link : mob.buffs(Ghoul.GhoulLifeLink.class)){
 						link.updateVisibility();
+					}
+				}
+			}
+			if (Dungeon.level != null && Dungeon.level.players != null) {
+				for (NetHero player : Dungeon.level.players.toArray(new NetHero[0])) {
+					if (player != null && player.sprite != null) {
+						player.sprite.visible = player.sprite.visibleOutOfFFOV
+								|| (Dungeon.level.insideMap(player.pos) && Dungeon.level.heroFOV[player.pos]);
 					}
 				}
 			}
