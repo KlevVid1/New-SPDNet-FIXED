@@ -326,20 +326,43 @@ public class NetWndLanMultiplayer extends NetWindow {
 	}
 
 	private void connectAsClient() {
-		saveSettings();
-		if (LanServer.isRunning()) {
-			NetWindow.info("Вы уже являетесь хостом. Для подключения к другому хосту сначала остановите свой сервер.");
-			return;
+		try {
+			saveSettings();
+			if (LanServer.isRunning()) {
+				NetWindow.info("Вы уже являетесь хостом. Для подключения к другому хосту сначала остановите свой сервер.");
+				return;
+			}
+			String ip = hostIpInput.getText().trim();
+			if (ip.isEmpty()) {
+				ip = "192.168.43.1";
+			}
+			if (ip.startsWith("http://")) {
+				ip = ip.substring(7);
+			} else if (ip.startsWith("https://")) {
+				ip = ip.substring(8);
+			}
+			while (ip.endsWith("/")) {
+				ip = ip.substring(0, ip.length() - 1);
+			}
+			int port = LanServer.DEFAULT_PORT;
+			if (ip.contains(":")) {
+				try {
+					String[] parts = ip.split(":");
+					ip = parts[0];
+					if (parts.length > 1 && !parts[1].isEmpty()) {
+						port = Integer.parseInt(parts[1]);
+					}
+				} catch (Exception ignored) {}
+			}
+			String nick = nameInput.getText().trim();
+			if (nick.isEmpty()) {
+				nick = "Client";
+			}
+			Net.connectTo("http://" + ip + ":" + port + "/spdnet", nick);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			NetWindow.error("Ошибка подключения: " + t.getMessage());
 		}
-		String ip = hostIpInput.getText().trim();
-		if (ip.isEmpty()) {
-			ip = "192.168.43.1";
-		}
-		String nick = nameInput.getText().trim();
-		if (nick.isEmpty()) {
-			nick = "Client";
-		}
-		Net.connectTo("http://" + ip + ":" + LanServer.DEFAULT_PORT + "/spdnet", nick);
 	}
 
 	@Override

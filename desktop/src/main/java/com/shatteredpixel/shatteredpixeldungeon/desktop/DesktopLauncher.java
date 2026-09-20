@@ -73,6 +73,16 @@ public class DesktopLauncher {
 		Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 			@Override
 			public void uncaughtException(Thread thread, Throwable throwable) {
+				System.err.println("FATAL EXCEPTION in thread [" + thread.getName() + "]:");
+				throwable.printStackTrace();
+				try {
+					java.io.File log = new java.io.File(System.getProperty("user.home"), "spdnet-crash.log");
+					java.io.PrintWriter pwLog = new java.io.PrintWriter(new java.io.FileWriter(log, true));
+					pwLog.println("=== Crash on thread [" + thread.getName() + "] at " + new java.util.Date() + " ===");
+					throwable.printStackTrace(pwLog);
+					pwLog.close();
+				} catch (Exception ignored) {}
+
 				Game.reportException(throwable);
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);

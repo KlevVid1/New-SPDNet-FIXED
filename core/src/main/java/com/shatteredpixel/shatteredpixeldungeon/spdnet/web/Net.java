@@ -63,10 +63,16 @@ public class Net {
 				opts.transports = new String[] { "websocket" };
 				String clientName = (name != null && !name.isEmpty() && !name.equals("未登录") && !name.equals("Не авторизован") && !name.equals("Not logged in")) ? name : NetSettings.getName();
 				String clientPassword = NetSettings.getPassword();
-				opts.query = "name=" + clientName + "&password=" + clientPassword + "&SPDVersion=" + Game.version + "&NetVersion=" + Game.netVersion;
+				if (clientPassword == null) clientPassword = "";
+				String encName = java.net.URLEncoder.encode(clientName, "UTF-8");
+				String encPass = java.net.URLEncoder.encode(clientPassword, "UTF-8");
+				String encVer = java.net.URLEncoder.encode(Game.version != null ? Game.version : "4.0.0", "UTF-8");
+				String encNetVer = java.net.URLEncoder.encode(Game.netVersion != null ? Game.netVersion : "2", "UTF-8");
+				opts.query = "name=" + encName + "&password=" + encPass + "&SPDVersion=" + encVer + "&NetVersion=" + encNetVer;
 				socket = IO.socket(serverUrl, opts);
-			} catch (URISyntaxException e) {
-				throw new RuntimeException(e);
+			} catch (Exception e) {
+				com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w("Net.getSocket error: " + e.getMessage());
+				throw new RuntimeException("Ошибка создания сокета: " + e.getMessage(), e);
 			}
 		}
 		return socket;
@@ -125,10 +131,16 @@ public class Net {
 	 * Подключение к заданному серверу с заданным именем игрока (для LAN-коопа и локальных серверов)
 	 */
 	public static void connectTo(String url, String nickname) {
-		destroySocket();
-		serverUrl = url;
-		name = nickname;
-		connect();
+		try {
+			destroySocket();
+			serverUrl = url;
+			name = nickname;
+			connect();
+		} catch (Throwable t) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w("Net.connectTo failed: " + t.getMessage());
+			t.printStackTrace();
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.windows.NetWindow.error("Ошибка сети: " + t.getMessage());
+		}
 	}
 
 	/**

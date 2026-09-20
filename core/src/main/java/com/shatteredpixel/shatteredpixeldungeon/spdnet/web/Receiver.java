@@ -69,27 +69,43 @@ public class Receiver {
 			});
 		};
 		Emitter.Listener onConnectionError = args -> {
-			if (getSocket() == null || !getSocket().io().isReconnecting()) {
-				cancelAll();
-			}
-
-			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
-			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
-					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
-			String errorMessage = isRu ? "Ошибка подключения к серверу" : (isZh ? "连接服务器失败" : "Connection to server failed");
-			if (args != null && args.length > 0 && args[0] != null) {
-				errorMessage += ":\n" + args[0].toString();
-			}
-
-			String finalMsg = errorMessage;
-			Game.runOnRenderThread(() -> {
-				if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-					GameScene.clearPlayers();
-					com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w(finalMsg);
-				} else {
-					NetWindow.error(finalMsg);
+			try {
+				if (getSocket() == null || !getSocket().io().isReconnecting()) {
+					cancelAll();
 				}
-			});
+
+				boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+				boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+						|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+				String errorMessage = isRu ? "Не удалось подключиться к серверу" : (isZh ? "连接服务器失败" : "Connection to server failed");
+				if (args != null && args.length > 0 && args[0] != null) {
+					String errStr = args[0].toString();
+					if (errStr.contains("ConnectException") || errStr.contains("Failed to connect") || errStr.contains("refused")) {
+						errorMessage = isRu ? "Сервер недоступен или выключен" : (isZh ? "目标服务器未开启或不可达" : "Server unreachable or offline");
+					} else if (errStr.length() > 60) {
+						errStr = errStr.substring(0, 60) + "...";
+						errorMessage += ":\n" + errStr;
+					} else {
+						errorMessage += ":\n" + errStr;
+					}
+				}
+
+				String finalMsg = errorMessage;
+				Game.runOnRenderThread(() -> {
+					try {
+						if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+							GameScene.clearPlayers();
+							com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w(finalMsg);
+						} else {
+							NetWindow.error(finalMsg);
+						}
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+				});
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
 		};
 		Emitter.Listener onAchievement = args -> {
 			Handler.handleAchievement(JSON.parseObject(args[0].toString(), SAchievement.class));
