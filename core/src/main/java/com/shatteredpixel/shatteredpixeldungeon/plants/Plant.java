@@ -151,7 +151,7 @@ public abstract class Plant implements Bundlable {
 		}
 		
 		@Override
-		protected void onThrow( int cell ) {
+		public void onThrow( int cell ) {
 			if (Dungeon.level.map[cell] == Terrain.ALCHEMY
 					|| Dungeon.level.pit[cell]
 					|| Dungeon.level.traps.get(cell) != null
@@ -160,7 +160,7 @@ public abstract class Plant implements Bundlable {
 			} else {
 				Catalog.countUse(getClass());
 				Dungeon.level.plant( this, cell );
-				if (Dungeon.hero.subClass == HeroSubClass.WARDEN) {
+				if (Dungeon.hero != null && Dungeon.hero.subClass == HeroSubClass.WARDEN) {
 					for (int i : PathFinder.NEIGHBOURS8) {
 						int c = Dungeon.level.map[cell + i];
 						if ( c == Terrain.EMPTY || c == Terrain.EMPTY_DECO
@@ -182,6 +182,16 @@ public abstract class Plant implements Bundlable {
 			if (action.equals( AC_PLANT )) {
 
 				hero.busy();
+				if (hero == Dungeon.hero && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendPotionThrow(
+							Dungeon.floorId(),
+							hero.pos,
+							hero.pos,
+							getClass().getName(),
+							0,
+							true
+					);
+				}
 				((Seed)detach( hero.belongings.backpack )).onThrow( hero.pos );
 				hero.spend( TIME_TO_PLANT );
 

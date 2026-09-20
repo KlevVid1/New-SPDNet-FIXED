@@ -149,8 +149,11 @@ public class NetHero extends Hero {
 	@Override
 	public void onMotionComplete() {
 		super.onMotionComplete();
-		if (sprite != null && sprite.looping()) {
-			sprite.idle();
+		if (sprite != null) {
+			sprite.place(pos);
+			if (sprite.looping()) {
+				sprite.idle();
+			}
 		}
 	}
 
@@ -164,11 +167,25 @@ public class NetHero extends Hero {
 		}
 		if (sprite != null) {
 			sprite.interruptMotion();
-			sprite.move(pos, newPos);
+			if (Dungeon.level != null && !Dungeon.level.adjacent(pos, newPos)) {
+				sprite.place(newPos);
+			} else {
+				sprite.move(pos, newPos);
+			}
+			if (Dungeon.level != null && Dungeon.level.insideMap(newPos)) {
+				sprite.visible = Dungeon.level.heroFOV[newPos];
+			}
 		}
 		pos = newPos;
 		if (Dungeon.level != null && Dungeon.level.insideMap(newPos)) {
 			Dungeon.level.occupyCell(this);
+			if (Dungeon.level.map[newPos] == com.shatteredpixel.shatteredpixeldungeon.levels.Terrain.DOOR) {
+				com.shatteredpixel.shatteredpixeldungeon.levels.features.Door.enter(newPos);
+			}
+			com.shatteredpixel.shatteredpixeldungeon.plants.Plant plant = Dungeon.level.plants.get(newPos);
+			if (plant != null) {
+				plant.trigger();
+			}
 		}
 	}
 

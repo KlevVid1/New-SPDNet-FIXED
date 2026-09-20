@@ -176,6 +176,7 @@ public class GameScene extends PixelScene {
 	// SPDNet: 记录上次发送进入地牢消息时的楼层和种子，防止窗口大小改变时重复发送
 	private static int lastEnterDepth = -1;
 	private static long lastEnterSeed = -1;
+	private static int lastSyncedHeroPos = -1;
 
 	private SkinnedBlock water;
 	private DungeonTerrainTilemap tiles;
@@ -864,6 +865,13 @@ public class GameScene extends PixelScene {
 			}
 			lastEnterDepth = Dungeon.floorId();
 			lastEnterSeed = Dungeon.seed;
+			lastSyncedHeroPos = Dungeon.hero != null ? Dungeon.hero.pos : -1;
+		}
+
+		if (Dungeon.hero != null && com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && Dungeon.hero.pos != lastSyncedHeroPos) {
+			lastSyncedHeroPos = Dungeon.hero.pos;
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendPlayerMove(
+					new com.shatteredpixel.shatteredpixeldungeon.spdnet.web.structure.actions.CPlayerMove(Dungeon.hero.pos));
 		}
 	}
 	
@@ -894,6 +902,7 @@ public class GameScene extends PixelScene {
 	public static void resetEnterDungeonRecord() {
 		lastEnterDepth = -1;
 		lastEnterSeed = -1;
+		lastSyncedHeroPos = -1;
 	}
 
 	public boolean waitForActorThread(int msToWait, boolean interrupt){

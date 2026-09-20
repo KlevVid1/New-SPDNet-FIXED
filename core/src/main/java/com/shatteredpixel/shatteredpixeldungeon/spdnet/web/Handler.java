@@ -440,6 +440,8 @@ public class Handler {
 					} else {
 						player1.pos = playerMove.getPos();
 					}
+				} else if (status.getDepth() == Dungeon.floorId()) {
+					NetHero.addPlayerToDungeon(player);
 				}
 				if (status.getDepth() == Dungeon.floorId()) {
 					stepActiveBlobs();
@@ -994,6 +996,10 @@ public class Handler {
 	private static void onRemoteMissileLanded(Item item, int targetPos) {
 		if (item instanceof Potion) {
 			((Potion) item).shatter(targetPos);
+		} else if (item instanceof com.shatteredpixel.shatteredpixeldungeon.plants.Plant.Seed) {
+			if (Dungeon.level != null && targetPos >= 0 && targetPos < Dungeon.level.length()) {
+				((com.shatteredpixel.shatteredpixeldungeon.plants.Plant.Seed) item).onThrow(targetPos);
+			}
 		} else if (item instanceof MissileWeapon) {
 			Char target = Actor.findChar(targetPos);
 			if (target != null && Dungeon.level != null && targetPos < Dungeon.level.heroFOV.length && Dungeon.level.heroFOV[targetPos]) {

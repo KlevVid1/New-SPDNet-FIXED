@@ -148,6 +148,7 @@ public class LanServer {
 		clearedEternalFiresByFloor.clear();
 
 		InetSocketAddress address = new InetSocketAddress("0.0.0.0", currentPort);
+		final java.util.concurrent.CountDownLatch startLatch = new java.util.concurrent.CountDownLatch(1);
 		server = new WebSocketServer(address) {
 			@Override
 			public void onOpen(WebSocket conn, ClientHandshake handshake) {
@@ -172,6 +173,7 @@ public class LanServer {
 			@Override
 			public void onStart() {
 				NLog.i("LanServer started on port " + currentPort);
+				startLatch.countDown();
 			}
 		};
 
@@ -179,6 +181,10 @@ public class LanServer {
 		server.setTcpNoDelay(true);
 		server.setConnectionLostTimeout(60);
 		server.start();
+
+		try {
+			startLatch.await(1000, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException ignored) {}
 
 		// Запуск периодического Engine.IO ping для предотвращения ping-timeout на клиенте
 		pingScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
