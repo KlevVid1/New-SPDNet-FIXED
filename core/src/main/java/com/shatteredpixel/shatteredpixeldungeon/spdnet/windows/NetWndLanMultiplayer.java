@@ -142,8 +142,16 @@ public class NetWndLanMultiplayer extends NetWindow {
 			protected void onClick() {
 				saveSettings();
 				if (LanServer.isRunning()) {
-					LanServer.stop();
-					Net.disConnect();
+					try {
+						LanServer.stop();
+					} catch (Throwable t) {
+						com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w("LanServer stop error: " + t.getMessage());
+					}
+					try {
+						Net.disConnect();
+					} catch (Throwable t) {
+						com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w("Net disConnect error: " + t.getMessage());
+					}
 				} else {
 					try {
 						String nick = nameInput.getText().trim();
@@ -151,7 +159,7 @@ public class NetWndLanMultiplayer extends NetWindow {
 						LanServer.start(LanServer.DEFAULT_PORT);
 						LanServer.setHostPlayerName(nick);
 						Net.connectTo("http://127.0.0.1:" + LanServer.DEFAULT_PORT + "/spdnet", nick);
-					} catch (IOException e) {
+					} catch (Throwable e) {
 						NetWindow.error("Ошибка запуска сервера: " + e.getMessage());
 					}
 				}

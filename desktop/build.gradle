@@ -72,8 +72,15 @@ jpackageImage.dependsOn release
 runtime {
     modules = ['java.base',
                'java.desktop',
+               'java.logging',
+               'java.naming',
+               'java.xml',
+               'java.net.http',
+               'java.sql',
                'jdk.unsupported',
                'jdk.crypto.cryptoki',
+               'jdk.crypto.ec',
+               'jdk.naming.dns',
                'jdk.management']
     options = ['--strip-debug',
                '--compress', '2',

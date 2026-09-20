@@ -294,6 +294,10 @@ public class Receiver {
 	}
 
 	public static void cancelAll() {
-		getSocket().off();
+		try {
+			if (Net.hasSocket()) {
+				getSocket().off();
+			}
+		} catch (Throwable ignored) {}
 	}
 }

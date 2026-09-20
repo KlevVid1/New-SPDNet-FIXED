@@ -70,12 +70,16 @@ public class Net {
 				String encNetVer = java.net.URLEncoder.encode(Game.netVersion != null ? Game.netVersion : "2", "UTF-8");
 				opts.query = "name=" + encName + "&password=" + encPass + "&SPDVersion=" + encVer + "&NetVersion=" + encNetVer;
 				socket = IO.socket(serverUrl, opts);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				com.shatteredpixel.shatteredpixeldungeon.spdnet.utils.NLog.w("Net.getSocket error: " + e.getMessage());
 				throw new RuntimeException("Ошибка создания сокета: " + e.getMessage(), e);
 			}
 		}
 		return socket;
+	}
+
+	public static boolean hasSocket() {
+		return socket != null;
 	}
 
 	public static void connect() {
@@ -84,8 +88,14 @@ public class Net {
 	}
 
 	public static void disConnect() {
-		Receiver.cancelAll();
-		getSocket().disconnect();
+		try {
+			Receiver.cancelAll();
+		} catch (Throwable ignored) {}
+		try {
+			if (socket != null) {
+				socket.disconnect();
+			}
+		} catch (Throwable ignored) {}
 	}
 
 	/**
