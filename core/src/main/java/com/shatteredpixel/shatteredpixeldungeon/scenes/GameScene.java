@@ -1703,6 +1703,9 @@ public class GameScene extends PixelScene {
 				Dungeon.deleteGame(GamesInProgress.curSlot, true);
 				GamesInProgress.selectedClass = Dungeon.hero != null ? Dungeon.hero.heroClass : null;
 				GamesInProgress.curSlot = GamesInProgress.firstEmpty();
+				if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.prepareNextGameSeed();
+				}
 				ShatteredPixelDungeon.switchScene(HeroSelectScene.class);
 			}
 

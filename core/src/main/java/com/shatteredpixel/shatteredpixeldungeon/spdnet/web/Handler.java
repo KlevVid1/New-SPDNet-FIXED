@@ -595,8 +595,45 @@ public class Handler {
 		Game.runOnRenderThread(() -> {
 			if (Dungeon.level != null) {
 				int cell = terrainChange.getPos();
+				if (cell < 0 || cell >= Dungeon.level.length()) {
+					return;
+				}
 				int newTerrain = terrainChange.getTerrain();
 				int oldTerrain = Dungeon.level.map[cell];
+				if (oldTerrain == newTerrain) {
+					return;
+				}
+
+				// Защита от повреждения генерации карты:
+				// 1. Двери: могут меняться только на клетках, которые уже являются дверями
+				if (newTerrain == Terrain.DOOR || newTerrain == Terrain.OPEN_DOOR) {
+					boolean isDoorSlot = (oldTerrain == Terrain.DOOR || oldTerrain == Terrain.OPEN_DOOR ||
+							oldTerrain == Terrain.LOCKED_DOOR || oldTerrain == Terrain.HERO_LKD_DR ||
+							oldTerrain == Terrain.CRYSTAL_DOOR || oldTerrain == Terrain.SECRET_DOOR);
+					if (!isDoorSlot) {
+						return;
+					}
+				}
+
+				// 2. Стены и пропасти: удаленный пакет не должен ломать стены или засыпать бездну
+				if ((oldTerrain == Terrain.WALL || oldTerrain == Terrain.WALL_DECO || oldTerrain == Terrain.CHASM) &&
+						(newTerrain != Terrain.WALL && newTerrain != Terrain.WALL_DECO && newTerrain != Terrain.CHASM)) {
+					return;
+				}
+
+				// 3. Ловушки: не спавнить ловушки на пустых клетках
+				if (newTerrain == Terrain.TRAP || newTerrain == Terrain.INACTIVE_TRAP) {
+					boolean isTrapSlot = (oldTerrain == Terrain.SECRET_TRAP || oldTerrain == Terrain.TRAP || oldTerrain == Terrain.INACTIVE_TRAP);
+					if (!isTrapSlot) {
+						return;
+					}
+				}
+
+				// 4. Баррикады: баррикада не должна возникать на пустом месте
+				if (newTerrain == Terrain.BARRICADE && oldTerrain != Terrain.BARRICADE) {
+					return;
+				}
+
 				Level.isRemoteTerrainChange = true;
 				try {
 					Level.set(cell, newTerrain, Dungeon.level);

@@ -118,6 +118,22 @@ public class LanServer {
 		}
 	}
 
+	public static synchronized void prepareNextGameSeed() {
+		long newSeed = !com.shatteredpixel.shatteredpixeldungeon.SPDSettings.customSeed().isEmpty() ?
+				DungeonSeed.convertFromText(com.shatteredpixel.shatteredpixeldungeon.SPDSettings.customSeed()) :
+				DungeonSeed.randomSeed();
+		currentSeed = newSeed;
+		seeds.put("seedFUN", newSeed);
+		NLog.i("LanServer: prepared next game seed: " + newSeed + " (" + DungeonSeed.convertToCode(newSeed) + ")");
+		for (WebSocket conn : sessions.keySet()) {
+			LanSession session = sessions.get(conn);
+			if (session != null && conn.isOpen()) {
+				SInit sInit = new SInit(session.name, "Локальный сервер SPDNet", seeds, new HashSet<>());
+				emit(conn, Events.INIT.getName(), sInit);
+			}
+		}
+	}
+
 	public static synchronized int getPlayerCount() {
 		return sessions.size();
 	}

@@ -42,6 +42,9 @@ public class NetInProgress {
 	 */
 	public static void resetForNextGame() {
 		switchToMode(Mode.FUN);
+		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.prepareNextGameSeed();
+		}
 	}
 
 	public static String getDailySeedKey() {

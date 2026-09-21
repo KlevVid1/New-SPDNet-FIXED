@@ -175,6 +175,9 @@ public class HeroSelectScene extends PixelScene {
 
 				Dungeon.hero = null;
 				Dungeon.daily = Dungeon.dailyReplay = false;
+				if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
+					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.prepareNextGameSeed();
+				}
 				Dungeon.initSeed();
 				if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning() && Dungeon.seed != 0) {
 					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(Dungeon.seed);

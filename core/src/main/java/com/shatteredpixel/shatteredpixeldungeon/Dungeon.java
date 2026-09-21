@@ -223,24 +223,28 @@ public class Dungeon {
 	public static void initSeed(){
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()) {
 			if (com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
-				long srvSeed = com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.getSeed();
-				if (srvSeed != 0L) {
-					seed = srvSeed;
-					customSeedText = "";
-				} else if (!SPDSettings.customSeed().isEmpty()){
+				if (!SPDSettings.customSeed().isEmpty()){
 					customSeedText = SPDSettings.customSeed();
 					seed = DungeonSeed.convertFromText(customSeedText);
 					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(seed);
 				} else {
 					customSeedText = "";
-					seed = DungeonSeed.randomSeed();
-					com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(seed);
+					long srvSeed = com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.getSeed();
+					if (srvSeed != 0L) {
+						seed = srvSeed;
+					} else {
+						seed = DungeonSeed.randomSeed();
+						com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.updateSeed(seed);
+					}
 				}
 			} else if (NetInProgress.mode == Mode.IRONMAN) {
 				seed = DungeonSeed.randomSeed();
 			} else if (NetInProgress.isDailyChallenge()) {
 				customSeedText = NetInProgress.seedName != null ? NetInProgress.seedName : "";
 				seed = NetInProgress.seed;
+			} else if (!SPDSettings.customSeed().isEmpty()){
+				customSeedText = SPDSettings.customSeed();
+				seed = DungeonSeed.convertFromText(customSeedText);
 			} else if (NetInProgress.seed != 0L) {
 				customSeedText = NetInProgress.seedName != null ? NetInProgress.seedName : "";
 				seed = NetInProgress.seed;
@@ -248,9 +252,6 @@ public class Dungeon {
 				seed = com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.seeds.get("seedFUN");
 				customSeedText = "seedFUN";
 				NetInProgress.seed = seed;
-			} else if (!SPDSettings.customSeed().isEmpty()){
-				customSeedText = SPDSettings.customSeed();
-				seed = DungeonSeed.convertFromText(customSeedText);
 			} else {
 				customSeedText = "";
 				seed = DungeonSeed.randomSeed();
