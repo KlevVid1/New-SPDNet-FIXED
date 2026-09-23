@@ -713,6 +713,8 @@ public class Handler {
 					Level.suppressMobDrops = true;
 					try {
 						mob.die(attacker);
+					} catch (Exception e) {
+						ShatteredPixelDungeon.reportException(e);
 					} finally {
 						Level.suppressMobDrops = false;
 						mob.isNetRemote = false;
@@ -736,6 +738,8 @@ public class Handler {
 				Level.suppressMobDrops = true;
 				try {
 					mob.die(null);
+				} catch (Exception e) {
+					ShatteredPixelDungeon.reportException(e);
 				} finally {
 					Level.suppressMobDrops = false;
 					mob.isNetRemote = false;

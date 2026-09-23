@@ -293,7 +293,7 @@ public abstract class Char extends Actor {
 		move( newPos );
 
 		c.pos = newPos;
-		c.sprite.move( newPos, oldPos );
+		if (c.sprite != null) c.sprite.move( newPos, oldPos );
 		c.move( oldPos );
 		
 		c.spend( 1 / c.speed() );
@@ -311,12 +311,14 @@ public abstract class Char extends Actor {
 	
 	public boolean moveSprite( int from, int to ) {
 		
-		if (sprite.isVisible() && sprite.parent != null && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[to])) {
+		if (sprite != null && sprite.isVisible() && sprite.parent != null && (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[to])) {
 			sprite.move( from, to );
 			return true;
-		} else {
+		} else if (sprite != null) {
 			sprite.turnTo(from, to);
 			sprite.place( to );
+			return true;
+		} else {
 			return true;
 		}
 	}
@@ -378,7 +380,9 @@ public abstract class Char extends Actor {
 		if (enemy.isInvulnerable(getClass())) {
 
 			if (visibleFight) {
-				enemy.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "invulnerable") );
+				if (enemy.sprite != null) {
+					enemy.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "invulnerable") );
+				}
 
 				Sample.INSTANCE.play(Assets.Sounds.HIT_PARRY, 1f, Random.Float(0.96f, 1.05f));
 			}
@@ -555,7 +559,8 @@ public abstract class Char extends Actor {
 			}
 
 			if (enemy.sprite != null) {
-				enemy.sprite.bloodBurstA(sprite.center(), effectiveDamage);
+				PointF burstCenter = sprite != null ? sprite.center() : enemy.sprite.center();
+				enemy.sprite.bloodBurstA(burstCenter, effectiveDamage);
 				enemy.sprite.flash();
 			}
 
@@ -829,8 +834,10 @@ public abstract class Char extends Actor {
 			return;
 		}
 
-		if(isInvulnerable(src.getClass())){
-			sprite.showStatus(CharSprite.POSITIVE, Messages.get(this, "invulnerable"));
+		if (src != null && isInvulnerable(src.getClass())){
+			if (sprite != null) {
+				sprite.showStatus(CharSprite.POSITIVE, Messages.get(this, "invulnerable"));
+			}
 			return;
 		}
 
@@ -974,8 +981,10 @@ public abstract class Char extends Actor {
 			b.announced = false;
 			b.attachTo(this);
 			b.set(bleedAmt, bleedSrc);
-			sprite.showStatus(CharSprite.WARNING, Messages.titleCase(b.name()) + " " + dmg);
-			Splash.at( sprite.center(), -PointF.PI / 2, PointF.PI / 6, sprite.blood(), 10 );
+			if (sprite != null) {
+				sprite.showStatus(CharSprite.WARNING, Messages.titleCase(b.name()) + " " + dmg);
+				Splash.at( sprite.center(), -PointF.PI / 2, PointF.PI / 6, sprite.blood(), 10 );
+			}
 			return;
 		}
 
@@ -994,7 +1003,9 @@ public abstract class Char extends Actor {
 				dmg += extraDmg;
 				HP -= extraDmg;
 
-				sprite.emitter().burst( ShadowParticle.UP, 5 );
+				if (sprite != null) {
+					sprite.emitter().burst( ShadowParticle.UP, 5 );
+				}
 				if (!isAlive() && ((Char) src).buff(Grim.GrimTracker.class).qualifiesForBadge){
 					Badges.validateGrimWeapon();
 				}
@@ -1059,7 +1070,9 @@ public abstract class Char extends Actor {
 			}
 			hitMissIcon = -1;
 
-			sprite.showStatusWithIcon(CharSprite.NEGATIVE, Integer.toString(dmg + shielded), icon);
+			if (sprite != null) {
+				sprite.showStatusWithIcon(CharSprite.NEGATIVE, Integer.toString(dmg + shielded), icon);
+			}
 		}
 
 		if (HP < 0) HP = 0;
@@ -1123,9 +1136,11 @@ public abstract class Char extends Actor {
 		}
 		destroy();
 		if (src != Chasm.class) {
-			sprite.die();
-			if (!flying && Dungeon.level != null && sprite instanceof MobSprite && Dungeon.level.map[pos] == Terrain.CHASM){
-				((MobSprite) sprite).fall();
+			if (sprite != null) {
+				sprite.die();
+				if (!flying && Dungeon.level != null && sprite instanceof MobSprite && Dungeon.level.map[pos] == Terrain.CHASM){
+					((MobSprite) sprite).fall();
+				}
 			}
 		}
 	}
@@ -1296,14 +1311,14 @@ public abstract class Char extends Actor {
 	public void move( int step, boolean travelling ) {
 
 		if (travelling && Dungeon.level.adjacent( step, pos ) && buff( Vertigo.class ) != null) {
-			sprite.interruptMotion();
+			if (sprite != null) sprite.interruptMotion();
 			int newPos = pos + PathFinder.NEIGHBOURS8[Random.Int( 8 )];
 			if (!(Dungeon.level.passable[newPos] || Dungeon.level.avoid[newPos])
 					|| (properties().contains(Property.LARGE) && !Dungeon.level.openSpace[newPos])
 					|| Actor.findChar( newPos ) != null)
 				return;
 			else {
-				sprite.move(pos, newPos);
+				if (sprite != null) sprite.move(pos, newPos);
 				step = newPos;
 			}
 		}
@@ -1319,7 +1334,7 @@ public abstract class Char extends Actor {
 		}
 		pos = step;
 		
-		if (this != Dungeon.hero) {
+		if (this != Dungeon.hero && sprite != null) {
 			sprite.visible = Dungeon.level.heroFOV[pos];
 		}
 		

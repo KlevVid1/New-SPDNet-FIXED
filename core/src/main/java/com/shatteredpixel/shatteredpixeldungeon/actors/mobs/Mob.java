@@ -58,6 +58,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.rogue.Shad
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.ClericSpell;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.GuidingLight;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Stasis;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.DirectableAlly;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -304,11 +305,13 @@ public abstract class Mob extends Char {
 		alerted = false;
 		
 		if (justAlerted){
-			sprite.showAlert();
+			if (sprite != null) sprite.showAlert();
 		} else {
-			sprite.hideAlert();
-			sprite.hideLost();
-			sprite.hideInvestigate();
+			if (sprite != null) {
+				sprite.hideAlert();
+				sprite.hideLost();
+				sprite.hideInvestigate();
+			}
 		}
 		
 		if (paralysed > 0) {
@@ -811,7 +814,7 @@ public abstract class Mob extends Char {
 	
 	protected boolean doAttack( Char enemy ) {
 		
-		if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
+		if (sprite != null && (sprite.visible || (enemy != null && enemy.sprite != null && enemy.sprite.visible))) {
 			sprite.attack( enemy.pos );
 			if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
 					&& !isNetRemote && Dungeon.level != null && syncId > 0) {
@@ -847,10 +850,15 @@ public abstract class Mob extends Char {
 			super.onAttackComplete();
 			return;
 		}
-		attack( enemy );
-		Invisibility.dispel(this);
-		spend( attackDelay() );
-		super.onAttackComplete();
+		try {
+			if (enemy != null && enemy.isAlive()) {
+				attack( enemy );
+			}
+			Invisibility.dispel(this);
+			spend( attackDelay() );
+		} finally {
+			super.onAttackComplete();
+		}
 	}
 	
 	@Override
@@ -1150,7 +1158,8 @@ public abstract class Mob extends Char {
 			if (Random.Float() < lootChance()) {
 				Item loot = createLoot();
 				if (loot != null) {
-					Dungeon.level.drop(loot, pos).sprite.drop();
+					Heap h = Dungeon.level.drop(loot, pos);
+					if (h != null && h.sprite != null) h.sprite.drop();
 				}
 			}
 		}
@@ -1162,15 +1171,19 @@ public abstract class Mob extends Char {
 			else if (properties.contains(Property.MINIBOSS)) rolls = 5;
 			ArrayList<Item> bonus = RingOfWealth.tryForBonusDrop(Dungeon.hero, rolls);
 			if (bonus != null && !bonus.isEmpty()) {
-				for (Item b : bonus) Dungeon.level.drop(b, pos).sprite.drop();
-				RingOfWealth.showFlareForBonusDrop(sprite);
+				for (Item b : bonus) {
+					Heap h = Dungeon.level.drop(b, pos);
+					if (h != null && h.sprite != null) h.sprite.drop();
+				}
+				if (sprite != null) RingOfWealth.showFlareForBonusDrop(sprite);
 			}
 		}
 		
 		//lucky enchant logic
 		if (buff(Lucky.LuckProc.class) != null){
-			Dungeon.level.drop(buff(Lucky.LuckProc.class).genLoot(), pos).sprite.drop();
-			Lucky.showFlare(sprite);
+			Heap h = Dungeon.level.drop(buff(Lucky.LuckProc.class).genLoot(), pos);
+			if (h != null && h.sprite != null) h.sprite.drop();
+			if (sprite != null) Lucky.showFlare(sprite);
 		}
 
 		//soul eater talent
@@ -1247,7 +1260,7 @@ public abstract class Mob extends Char {
 	}
 	
 	public void notice() {
-		sprite.showAlert();
+		if (sprite != null) sprite.showAlert();
 	}
 	
 	public void yell( String str ) {
@@ -1428,7 +1441,7 @@ public abstract class Mob extends Char {
 				if (enemyInFOV) {
 					target = enemy.pos;
 				} else if (enemy == null) {
-					sprite.showLost();
+					if (sprite != null) sprite.showLost();
 					state = WANDERING;
 					target = ((Mob.Wandering)WANDERING).randomDestination();
 					spend( TICK );
@@ -1485,7 +1498,7 @@ public abstract class Mob extends Char {
 
 			spend( TICK );
 			if (!enemyInFOV) {
-				sprite.showLost();
+				if (sprite != null) sprite.showLost();
 				state = WANDERING;
 				target = ((Mob.Wandering)WANDERING).randomDestination();
 			}
@@ -1506,7 +1519,7 @@ public abstract class Mob extends Char {
 			} else {
 				//we lose our target BEFORE reaching their last known position
 				if (Dungeon.level.distance(pos, target) <= 1){
-					sprite.showLost();
+					if (sprite != null) sprite.showLost();
 					state = WANDERING;
 					target = ((Mob.Wandering)WANDERING).randomDestination();
 					spend( TICK );
@@ -1689,7 +1702,7 @@ public abstract class Mob extends Char {
 			alerted = false;
 			state = INVESTIGATING;
 			investigatingTurns = 0;
-			sprite.showInvestigate();
+			if (sprite != null) sprite.showInvestigate();
 			spend(TICK);
 			//hero must know if they are detected
 			if (!Dungeon.level.heroFOV[pos]){
@@ -1717,7 +1730,7 @@ public abstract class Mob extends Char {
 				} else {
 					//reset this, representing the mob looking around in place
 					previousPos = pos;
-					sprite.idle();
+					if (sprite != null) sprite.idle();
 				}
 			}
 			return wanderPos;
@@ -1742,7 +1755,7 @@ public abstract class Mob extends Char {
 				alerted = false;
 				state = INVESTIGATING;
 				investigatingTurns = 0;
-				sprite.showInvestigate();
+				if (sprite != null) sprite.showInvestigate();
 				//hero must know if they are detected
 				if (!Dungeon.level.heroFOV[pos]){
 					Buff.affect(Dungeon.hero, TalismanOfForesight.CharAwareness.class, 1f).charID = id();

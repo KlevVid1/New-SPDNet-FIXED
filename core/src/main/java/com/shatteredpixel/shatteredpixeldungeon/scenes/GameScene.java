@@ -898,6 +898,14 @@ public class GameScene extends PixelScene {
 		}
 	}
 
+	public static void notifyActorThread(){
+		if (actorThread != null && actorThread.isAlive()){
+			synchronized (actorThread) {
+				actorThread.notify();
+			}
+		}
+	}
+
 	// SPDNet: 重置进入地牢记录，在离开地牢时调用
 	public static void resetEnterDungeonRecord() {
 		lastEnterDepth = -1;
@@ -981,9 +989,9 @@ public class GameScene extends PixelScene {
 			waterOfs = water.offsetY(); //re-assign to account for auto adjust
 		}
 
-		if (!Actor.processing() && Dungeon.hero.isAlive()) {
+		if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
 			if (actorThread == null || !actorThread.isAlive()) {
-				
+				Actor.clearCurrent();
 				actorThread = new Thread() {
 					@Override
 					public void run() {
@@ -999,11 +1007,17 @@ public class GameScene extends PixelScene {
 				Thread.currentThread().setName("SHPD Render Thread");
 				Actor.keepActorThreadAlive = true;
 				actorThread.start();
-			} else if (notifyDelay <= 0f) {
+			} else if (!Actor.processing() && notifyDelay <= 0f) {
 				notifyDelay += 1/60f;
 				synchronized (actorThread) {
 					actorThread.notify();
 				}
+			}
+
+			if (!Dungeon.hero.ready && Dungeon.hero.curAction == null && !Dungeon.hero.resting && Dungeon.hero.paralysed == 0
+					&& (Dungeon.hero.sprite == null || !Dungeon.hero.sprite.isMoving) && !Actor.processing()) {
+				Dungeon.hero.ready = true;
+				ready();
 			}
 		}
 

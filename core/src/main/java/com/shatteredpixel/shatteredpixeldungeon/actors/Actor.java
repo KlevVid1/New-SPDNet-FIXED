@@ -238,6 +238,10 @@ public abstract class Actor implements Bundlable {
 		}
 	}
 
+	public static void clearCurrent() {
+		current = null;
+	}
+
 	public static boolean processing(){
 		return current != null;
 	}
@@ -301,7 +305,13 @@ public abstract class Actor implements Bundlable {
 					doNext = false;
 					current = null;
 				} else {
-					doNext = acting.act();
+					try {
+						doNext = acting.act();
+					} catch (Exception e) {
+						com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon.reportException(e);
+						doNext = false;
+						current = null;
+					}
 					if (doNext && (Dungeon.hero == null || !Dungeon.hero.isAlive())) {
 						doNext = false;
 						current = null;
@@ -325,7 +335,7 @@ public abstract class Actor implements Bundlable {
 					Thread.currentThread().notify();
 					
 					try {
-						Thread.currentThread().wait();
+						Thread.currentThread().wait(500);
 					} catch (InterruptedException e) {
 						interrupted = true;
 					}
@@ -367,6 +377,10 @@ public abstract class Actor implements Bundlable {
 	public static synchronized void remove( Actor actor ) {
 		
 		if (actor != null) {
+			if (current == actor) {
+				current = null;
+				com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene.notifyActorThread();
+			}
 			all.remove( actor );
 			chars.remove( actor );
 			actor.onRemove();

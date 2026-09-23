@@ -1010,6 +1010,9 @@ public class Hero extends Char {
 		curAction = null;
 		GameScene.resetKeyHold();
 		resting = false;
+		if (isAlive() && (sprite == null || !sprite.isMoving)) {
+			ready();
+		}
 	}
 	
 	public void resume() {
@@ -2392,39 +2395,40 @@ public class Hero extends Char {
 	
 	@Override
 	public void onAttackComplete() {
+		try {
+			if (attackTarget == null){
+				return;
+			}
+			
+			AttackIndicator.target(attackTarget);
+			boolean wasEnemy = attackTarget.alignment == Alignment.ENEMY
+					|| (attackTarget instanceof Mimic && attackTarget.alignment == Alignment.NEUTRAL);
 
-		if (attackTarget == null){
+			boolean hit = attack(attackTarget);
+			
+			Invisibility.dispel();
+			spend( attackDelay() );
+
+			if (hit && subClass == HeroSubClass.GLADIATOR && wasEnemy){
+				Buff.affect( this, Combo.class ).hit(attackTarget);
+			}
+
+			if (hit && heroClass == HeroClass.DUELIST && wasEnemy){
+				Buff.affect( this, Sai.ComboStrikeTracker.class).addHit( attackTarget );
+			}
+		} finally {
 			curAction = null;
+			attackTarget = null;
 			super.onAttackComplete();
-			return;
 		}
-		
-		AttackIndicator.target(attackTarget);
-		boolean wasEnemy = attackTarget.alignment == Alignment.ENEMY
-				|| (attackTarget instanceof Mimic && attackTarget.alignment == Alignment.NEUTRAL);
-
-		boolean hit = attack(attackTarget);
-		
-		Invisibility.dispel();
-		spend( attackDelay() );
-
-		if (hit && subClass == HeroSubClass.GLADIATOR && wasEnemy){
-			Buff.affect( this, Combo.class ).hit(attackTarget);
-		}
-
-		if (hit && heroClass == HeroClass.DUELIST && wasEnemy){
-			Buff.affect( this, Sai.ComboStrikeTracker.class).addHit( attackTarget );
-		}
-
-		curAction = null;
-		attackTarget = null;
-
-		super.onAttackComplete();
 	}
 	
 	@Override
 	public void onMotionComplete() {
 		GameScene.checkKeyHold();
+		if (curAction == null && !ready && isAlive()) {
+			ready();
+		}
 	}
 	
 	@Override
