@@ -26,7 +26,7 @@ allprojects {
         appVersionCode = 912
         appVersionName = '4.0.0'
         // Net的版本号
-        appNetVersionName = '2.2'
+        appNetVersionName = '2.3'
 
         appJavaCompatibility = JavaVersion.VERSION_11
 
