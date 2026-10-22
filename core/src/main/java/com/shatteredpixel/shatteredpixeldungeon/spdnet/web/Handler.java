@@ -179,26 +179,29 @@ public class Handler {
 	public static void handleEnterDungeon(SEnterDungeon enterDungeon) {
 		if (!enterDungeon.getName().equals(Net.name)) {
 			Player player = Net.playerList.get(enterDungeon.getName());
+			boolean isFloorChange = (player != null && player.getStatus() != null && player.getStatus().getDepth() > 0);
 			if (player == null) {
-				syncPlayerList();
-				return;
+				player = new Player(enterDungeon.getName(), "PLAYER", enterDungeon.getStatus());
 			}
 			player.setStatus(enterDungeon.getStatus());
 			player.setPrefix(enterDungeon.getPrefix());
 			Net.playerList.put(enterDungeon.getName(), player);
 			NetHero.addPlayerToDungeon(player);
-			String displayName = PrefixUtils.formatNameWithPrefix(enterDungeon.getName(), enterDungeon.getPrefix());
 
-			boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
-			boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
-					|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
-			String modeName = enterDungeon.getStatus().getGameModeEnum().getName();
-			int chCount = SPDUtils.activeChallenges(enterDungeon.getStatus().getChallenges());
+			if (!isFloorChange) {
+				String displayName = PrefixUtils.formatNameWithPrefix(enterDungeon.getName(), enterDungeon.getPrefix());
 
-			String enterMsg = isRu ? (displayName + " вошел в подземелье (" + modeName + ", исп.: " + chCount + ")") :
-					(isZh ? (displayName + "以" + (modeName.length() >= 2 ? modeName.substring(0, 2) : modeName) + "模式, " + chCount + "挑进入了地牢") :
-							(displayName + " entered dungeon (" + modeName + ", " + chCount + " chlng.)"));
-			NLog.h(enterMsg);
+				boolean isRu = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.RUSSIAN;
+				boolean isZh = com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_SMPL
+						|| com.shatteredpixel.shatteredpixeldungeon.messages.Messages.lang() == com.shatteredpixel.shatteredpixeldungeon.messages.Languages.CHI_TRAD;
+				String modeName = enterDungeon.getStatus().getGameModeEnum().getName();
+				int chCount = SPDUtils.activeChallenges(enterDungeon.getStatus().getChallenges());
+
+				String enterMsg = isRu ? (displayName + " вошел в подземелье (" + modeName + ", исп.: " + chCount + ")") :
+						(isZh ? (displayName + "以" + (modeName.length() >= 2 ? modeName.substring(0, 2) : modeName) + "模式, " + chCount + "挑进入了地牢") :
+								(displayName + " entered dungeon (" + modeName + ", " + chCount + " chlng.)"));
+				NLog.h(enterMsg);
+			}
 		}
 	}
 
@@ -387,6 +390,9 @@ public class Handler {
 				return;
 			}
 			status.setDepth(playerChangeFloor.getDepth());
+			if (playerChangeFloor.getPos() >= 0) {
+				status.setPos(playerChangeFloor.getPos());
+			}
 			player.setStatus(status);
 			Net.playerList.put(playerChangeFloor.getName(), player);
 			NetHero.addPlayerToDungeon(player);
@@ -687,7 +693,24 @@ public class Handler {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
-			Mob mob = Mob.findBySyncId(mobDamage.getSyncId(), mobDamage.getPos());
+			Mob mob = Mob.findBySyncId(mobDamage.getSyncId(), mobDamage.getPos(), mobDamage.getMobClass());
+			if (mob == null && mobDamage.getMobClass() != null && Dungeon.level != null) {
+				try {
+					Class<?> cl = Class.forName(mobDamage.getMobClass());
+					mob = (Mob) Reflection.newInstance(cl);
+					if (mob != null) {
+						mob.syncId = mobDamage.getSyncId();
+						mob.pos = mobDamage.getPos();
+						mob.HT = Math.max(mob.HT, mobDamage.getCurrentHP());
+						mob.HP = mobDamage.getCurrentHP();
+						if (ShatteredPixelDungeon.scene() instanceof GameScene) {
+							GameScene.add(mob);
+						} else {
+							Dungeon.level.mobs.add(mob);
+						}
+					}
+				} catch (Exception ignored) {}
+			}
 			if (mob != null && mob.isAlive()) {
 				mob.HP = mobDamage.getCurrentHP();
 				if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
@@ -707,6 +730,9 @@ public class Handler {
 				NetHero attacker = NetHero.getPlayerFromDungeon(mobDamage.getAttackerName());
 				if (attacker != null) {
 					mob.assignRemoteTarget(attacker);
+					if (attacker.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
+						attacker.sprite.attack(mob.pos);
+					}
 				}
 				if (mob.HP <= 0) {
 					mob.isNetRemote = true;
@@ -732,7 +758,7 @@ public class Handler {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
-			Mob mob = Mob.findBySyncId(mobDie.getSyncId(), mobDie.getPos());
+			Mob mob = Mob.findBySyncId(mobDie.getSyncId(), mobDie.getPos(), mobDie.getMobClass());
 			if (mob != null && mob.isAlive()) {
 				mob.isNetRemote = true;
 				Level.suppressMobDrops = true;
@@ -756,7 +782,7 @@ public class Handler {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
-			Mob mob = Mob.findBySyncId(mobMove.getSyncId(), mobMove.getFromPos());
+			Mob mob = Mob.findBySyncId(mobMove.getSyncId(), mobMove.getFromPos(), mobMove.getMobClass());
 			if (mob != null && mob.isAlive()) {
 				mob.isNetRemote = true;
 				try {
@@ -800,7 +826,7 @@ public class Handler {
 			return;
 		}
 		Game.runOnRenderThread(() -> {
-			Mob mob = Mob.findBySyncId(mobAttack.getSyncId(), -1);
+			Mob mob = Mob.findBySyncId(mobAttack.getSyncId(), -1, mobAttack.getMobClass());
 			if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
 				((Mimic) mob).stopHiding();
 			}
@@ -867,7 +893,7 @@ public class Handler {
 			// 1. Удаляем с клиента мобов, которых больше нет на хосте (убиты или деспавнились)
 			List<Mob> toRemove = new ArrayList<>();
 			for (Mob m : Dungeon.level.mobs) {
-				if (m != null && m.syncId > 0 && !hostMobIds.contains(m.syncId)) {
+				if (m != null && !hostMobIds.contains(m.syncId)) {
 					toRemove.add(m);
 				}
 			}
@@ -886,6 +912,13 @@ public class Handler {
 						existing = m;
 						break;
 					}
+				}
+				// Если тип моба не совпадает с хостом, уничтожаем неправильного и создаем нового
+				if (existing != null && s.getMobClass() != null && !existing.getClass().getName().equals(s.getMobClass())) {
+					existing.destroy();
+					Dungeon.level.mobs.remove(existing);
+					Actor.remove(existing);
+					existing = null;
 				}
 				if (existing != null) {
 					existing.HP = s.getHp();

@@ -139,15 +139,32 @@ public abstract class Mob extends Char {
 	public boolean isNetRemoteAttack = false;
 
 	public static Mob findBySyncId(int syncId, int fallbackPos) {
+		return findBySyncId(syncId, fallbackPos, null);
+	}
+
+	public static Mob findBySyncId(int syncId, int fallbackPos, String expectedClass) {
 		if (Dungeon.level == null || Dungeon.level.mobs == null) return null;
 		if (syncId > 0) {
 			for (Mob m : Dungeon.level.mobs) {
-				if (m.syncId == syncId) return m;
+				if (m.syncId == syncId) {
+					if (expectedClass == null || expectedClass.equals(m.getClass().getName())) {
+						return m;
+					}
+				}
 			}
 		}
 		if (fallbackPos >= 0 && fallbackPos < Dungeon.level.length()) {
 			for (Mob m : Dungeon.level.mobs) {
-				if (m.pos == fallbackPos) return m;
+				if (m.pos == fallbackPos) {
+					if (expectedClass == null || expectedClass.equals(m.getClass().getName())) {
+						return m;
+					}
+				}
+			}
+		}
+		if (syncId > 0) {
+			for (Mob m : Dungeon.level.mobs) {
+				if (m.syncId == syncId) return m;
 			}
 		}
 		return null;
@@ -1008,7 +1025,7 @@ public abstract class Mob extends Char {
 
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
 			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDamage(
-					Dungeon.floorId(), syncId, pos, dmg, HP, com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.name);
+					Dungeon.floorId(), syncId, pos, dmg, HP, com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.name, getClass().getName());
 		}
 	}
 
@@ -1074,7 +1091,7 @@ public abstract class Mob extends Char {
 	@Override
 	public void die( Object cause ) {
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected() && !isNetRemote && Dungeon.level != null) {
-			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDie(Dungeon.floorId(), syncId, pos);
+			com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Sender.sendMobDie(Dungeon.floorId(), syncId, pos, getClass().getName());
 		}
 
 		if (cause == Chasm.class){

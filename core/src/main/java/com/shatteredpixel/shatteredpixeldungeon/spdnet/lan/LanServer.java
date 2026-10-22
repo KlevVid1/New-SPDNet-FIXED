@@ -43,6 +43,8 @@ public class LanServer {
 	private static final Map<String, WebSocket> nameToConn = new ConcurrentHashMap<>();
 	private static final Map<String, List<JSONObject>> notesByLevel = new ConcurrentHashMap<>();
 	private static final Set<Integer> clearedEternalFiresByFloor = ConcurrentHashMap.newKeySet();
+	private static final Map<Integer, Set<Integer>> deadMobSyncIdsByDepth = new ConcurrentHashMap<>();
+	private static final Map<Integer, Map<Integer, Integer>> mobHpByDepthAndSyncId = new ConcurrentHashMap<>();
 	private static int nextNoteId = 1;
 
 	private static volatile String hostPlayerName = null;
@@ -108,6 +110,8 @@ public class LanServer {
 		}
 		currentSeed = newSeed;
 		seeds.put("seedFUN", newSeed);
+		deadMobSyncIdsByDepth.clear();
+		mobHpByDepthAndSyncId.clear();
 		NLog.i("LanServer: seed updated to " + newSeed);
 		for (WebSocket conn : sessions.keySet()) {
 			LanSession session = sessions.get(conn);
@@ -124,6 +128,8 @@ public class LanServer {
 				DungeonSeed.randomSeed();
 		currentSeed = newSeed;
 		seeds.put("seedFUN", newSeed);
+		deadMobSyncIdsByDepth.clear();
+		mobHpByDepthAndSyncId.clear();
 		NLog.i("LanServer: prepared next game seed: " + newSeed + " (" + DungeonSeed.convertToCode(newSeed) + ")");
 		for (WebSocket conn : sessions.keySet()) {
 			LanSession session = sessions.get(conn);
@@ -249,7 +255,9 @@ public class LanServer {
 				server = null;
 				sessions.clear();
 				nameToConn.clear();
-		clearedEternalFiresByFloor.clear();
+				clearedEternalFiresByFloor.clear();
+				deadMobSyncIdsByDepth.clear();
+				mobHpByDepthAndSyncId.clear();
 				seeds.clear();
 			}
 			NLog.i("LanServer stopped");
@@ -379,7 +387,10 @@ public class LanServer {
 				}
 				broadcast(Events.ENTER_DUNGEON.getName(), new SEnterDungeon(session.name, session.status, ""), conn);
 				sendNotesForSession(conn, session);
-				sendMobsForSession(conn, session);
+				broadcast(Events.PLAYER_LIST.getName(), new SPlayerList(collectAllPlayers()), null);
+				if (session.status != null) {
+					syncMobsForFloor(session.status.getDepth());
+				}
 
 			} else if (Actions.PLAYER_MOVE.getName().equals(actionName)) {
 				CPlayerMove c = JSON.parseObject(dataStr, CPlayerMove.class);
@@ -392,10 +403,14 @@ public class LanServer {
 				CPlayerChangeFloor c = JSON.parseObject(dataStr, CPlayerChangeFloor.class);
 				if (session.status != null) {
 					session.status.setDepth(c.getDepth());
+					if (c.getPos() >= 0) {
+						session.status.setPos(c.getPos());
+					}
 				}
-				broadcast(Events.PLAYER_CHANGE_FLOOR.getName(), new SPlayerChangeFloor(session.name, c.getDepth(), ""), conn);
+				broadcast(Events.PLAYER_CHANGE_FLOOR.getName(), new SPlayerChangeFloor(session.name, c.getDepth(), c.getPos(), ""), conn);
 				sendNotesForSession(conn, session);
-				sendMobsForSession(conn, session);
+				broadcast(Events.PLAYER_LIST.getName(), new SPlayerList(collectAllPlayers()), null);
+				syncMobsForFloor(c.getDepth());
 
 			} else if (Actions.CHAT_MESSAGE.getName().equals(actionName)) {
 				CChatMessage c = JSON.parseObject(dataStr, CChatMessage.class);
@@ -547,12 +562,14 @@ public class LanServer {
 
 			} else if (Actions.MOB_DAMAGE.getName().equals(actionName)) {
 				CMobDamage c = JSON.parseObject(dataStr, CMobDamage.class);
-				SMobDamage s = new SMobDamage(session.name, c.getDepth(), c.getSyncId(), c.getPos(), c.getDamage(), c.getCurrentHP(), c.getAttackerName());
+				mobHpByDepthAndSyncId.computeIfAbsent(c.getDepth(), k -> new ConcurrentHashMap<>()).put(c.getSyncId(), c.getCurrentHP());
+				SMobDamage s = new SMobDamage(session.name, c.getDepth(), c.getSyncId(), c.getPos(), c.getDamage(), c.getCurrentHP(), c.getAttackerName(), c.getMobClass());
 				broadcastDungeon(Events.MOB_DAMAGE.getName(), s, session, c.getDepth());
 
 			} else if (Actions.MOB_DIE.getName().equals(actionName)) {
 				CMobDie c = JSON.parseObject(dataStr, CMobDie.class);
-				SMobDie s = new SMobDie(session.name, c.getDepth(), c.getSyncId(), c.getPos());
+				deadMobSyncIdsByDepth.computeIfAbsent(c.getDepth(), k -> ConcurrentHashMap.newKeySet()).add(c.getSyncId());
+				SMobDie s = new SMobDie(session.name, c.getDepth(), c.getSyncId(), c.getPos(), c.getMobClass());
 				broadcastDungeon(Events.MOB_DIE.getName(), s, session, c.getDepth());
 
 			} else if (Actions.MOB_MOVE.getName().equals(actionName)) {
@@ -664,26 +681,59 @@ public class LanServer {
 		}
 	}
 
-	private static void sendMobsForSession(WebSocket conn, LanSession session) {
-		if (conn == null || !conn.isOpen() || session == null) {
-			return;
-		}
-		int depth = session.status != null ? session.status.getDepth() : 1;
+	public static void syncMobsForFloor(int depth) {
 		if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level != null
 				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.floorId() == depth
 				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs != null) {
+
+			Set<Integer> deadIds = deadMobSyncIdsByDepth.get(depth);
+			if (deadIds != null && !deadIds.isEmpty()) {
+				List<com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob> toRemove = new ArrayList<>();
+				for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs) {
+					if (m != null && deadIds.contains(m.syncId)) {
+						toRemove.add(m);
+					}
+				}
+				for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : toRemove) {
+					m.destroy();
+					com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs.remove(m);
+					com.shatteredpixel.shatteredpixeldungeon.actors.Actor.remove(m);
+				}
+			}
+
+			Map<Integer, Integer> hps = mobHpByDepthAndSyncId.get(depth);
+			if (hps != null && !hps.isEmpty()) {
+				for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs) {
+					if (m != null && hps.containsKey(m.syncId)) {
+						m.HP = hps.get(m.syncId);
+					}
+				}
+			}
+
 			List<SMobSpawn> list = new ArrayList<>();
 			for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs) {
 				if (m != null && m.isAlive()) {
 					if (m.syncId == 0) {
 						m.syncId = ++com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.maxMobSyncId;
 					}
-					list.add(new SMobSpawn(session.name, depth, m.syncId, m.getClass().getName(), m.pos, m.HP, m.HT));
+					list.add(new SMobSpawn("SERVER", depth, m.syncId, m.getClass().getName(), m.pos, m.HP, m.HT));
 				}
 			}
-			SMobSync sync = new SMobSync(session.name, depth, list);
-			emit(conn, Events.MOB_SYNC.getName(), sync);
+			SMobSync sync = new SMobSync("SERVER", depth, list);
+			for (LanSession s : sessions.values()) {
+				if (s != null && s.conn != null && s.conn.isOpen() && s.status != null && s.status.getDepth() == depth) {
+					emit(s.conn, Events.MOB_SYNC.getName(), sync);
+				}
+			}
 		}
+	}
+
+	private static void sendMobsForSession(WebSocket conn, LanSession session) {
+		if (conn == null || !conn.isOpen() || session == null) {
+			return;
+		}
+		int depth = session.status != null ? session.status.getDepth() : 1;
+		syncMobsForFloor(depth);
 	}
 
 	private static List<Player> collectAllPlayers() {

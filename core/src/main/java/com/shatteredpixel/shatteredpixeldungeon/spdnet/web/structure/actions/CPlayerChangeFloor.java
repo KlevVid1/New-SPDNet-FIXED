@@ -13,4 +13,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CPlayerChangeFloor extends Data {
 	private int depth;
+	private int pos = -1;
+
+	public CPlayerChangeFloor(int depth) {
+		this.depth = depth;
+		this.pos = -1;
+	}
 }

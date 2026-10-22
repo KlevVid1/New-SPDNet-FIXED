@@ -15,4 +15,9 @@ public class CMobDie extends Data {
 	private int depth;
 	private int syncId;
 	private int pos;
+	private String mobClass;
+
+	public CMobDie(int depth, int syncId, int pos) {
+		this(depth, syncId, pos, null);
+	}
 }

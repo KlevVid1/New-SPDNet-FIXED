@@ -185,12 +185,20 @@ public class Sender {
 	}
 
 	// SPDNet Co-op: Синхронизация мобов и боссов
+	public static void sendMobDamage(int depth, int syncId, int pos, int damage, int currentHP, String attackerName, String mobClass) {
+		emit(Actions.MOB_DAMAGE.getName(), JSON.toJSONString(new CMobDamage(depth, syncId, pos, damage, currentHP, attackerName, mobClass)));
+	}
+
 	public static void sendMobDamage(int depth, int syncId, int pos, int damage, int currentHP, String attackerName) {
-		emit(Actions.MOB_DAMAGE.getName(), JSON.toJSONString(new CMobDamage(depth, syncId, pos, damage, currentHP, attackerName)));
+		sendMobDamage(depth, syncId, pos, damage, currentHP, attackerName, null);
+	}
+
+	public static void sendMobDie(int depth, int syncId, int pos, String mobClass) {
+		emit(Actions.MOB_DIE.getName(), JSON.toJSONString(new CMobDie(depth, syncId, pos, mobClass)));
 	}
 
 	public static void sendMobDie(int depth, int syncId, int pos) {
-		emit(Actions.MOB_DIE.getName(), JSON.toJSONString(new CMobDie(depth, syncId, pos)));
+		sendMobDie(depth, syncId, pos, null);
 	}
 
 	public static void sendMobMove(int depth, int syncId, int fromPos, int toPos) {

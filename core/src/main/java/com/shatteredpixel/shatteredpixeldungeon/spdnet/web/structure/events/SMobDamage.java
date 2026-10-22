@@ -19,4 +19,9 @@ public class SMobDamage extends Data {
 	private int damage;
 	private int currentHP;
 	private String attackerName;
+	private String mobClass;
+
+	public SMobDamage(String name, int depth, int syncId, int pos, int damage, int currentHP, String attackerName) {
+		this(name, depth, syncId, pos, damage, currentHP, attackerName, null);
+	}
 }

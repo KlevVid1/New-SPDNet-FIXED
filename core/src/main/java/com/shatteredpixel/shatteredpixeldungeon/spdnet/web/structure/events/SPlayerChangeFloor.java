@@ -14,11 +14,19 @@ import lombok.Setter;
 public class SPlayerChangeFloor extends Data {
 	private String name;
 	private int depth;
+	private int pos = -1;
 	// SPDNet: 前缀系统 - 玩家前缀
 	private String prefix;
 
 	public SPlayerChangeFloor(String name, int depth) {
-		this.name = name;
-		this.depth = depth;
+		this(name, depth, -1, "");
+	}
+
+	public SPlayerChangeFloor(String name, int depth, int pos) {
+		this(name, depth, pos, "");
+	}
+
+	public SPlayerChangeFloor(String name, int depth, String prefix) {
+		this(name, depth, -1, prefix);
 	}
 }

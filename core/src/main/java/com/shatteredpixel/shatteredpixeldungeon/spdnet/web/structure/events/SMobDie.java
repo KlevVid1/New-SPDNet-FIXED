@@ -16,4 +16,9 @@ public class SMobDie extends Data {
 	private int depth;
 	private int syncId;
 	private int pos;
+	private String mobClass;
+
+	public SMobDie(String name, int depth, int syncId, int pos) {
+		this(name, depth, syncId, pos, null);
+	}
 }

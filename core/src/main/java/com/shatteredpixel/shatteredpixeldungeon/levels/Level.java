@@ -511,7 +511,9 @@ public abstract class Level implements Bundlable {
 		Collections.sort(sortedMobs, new Comparator<Mob>() {
 			@Override
 			public int compare(Mob a, Mob b) {
-				return Integer.compare(a.pos, b.pos);
+				int cmp = Integer.compare(a.pos, b.pos);
+				if (cmp != 0) return cmp;
+				return a.getClass().getName().compareTo(b.getClass().getName());
 			}
 		});
 		int id = 1;
