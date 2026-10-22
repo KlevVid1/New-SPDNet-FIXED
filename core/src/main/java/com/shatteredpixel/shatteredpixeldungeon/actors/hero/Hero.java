@@ -1010,9 +1010,6 @@ public class Hero extends Char {
 		curAction = null;
 		GameScene.resetKeyHold();
 		resting = false;
-		if (isAlive() && (sprite == null || !sprite.isMoving)) {
-			ready();
-		}
 	}
 	
 	public void resume() {
@@ -2426,9 +2423,6 @@ public class Hero extends Char {
 	@Override
 	public void onMotionComplete() {
 		GameScene.checkKeyHold();
-		if (curAction == null && !ready && isAlive()) {
-			ready();
-		}
 	}
 	
 	@Override

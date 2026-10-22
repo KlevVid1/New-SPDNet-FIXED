@@ -1013,12 +1013,6 @@ public class GameScene extends PixelScene {
 					actorThread.notify();
 				}
 			}
-
-			if (!Dungeon.hero.ready && Dungeon.hero.curAction == null && !Dungeon.hero.resting && Dungeon.hero.paralysed == 0
-					&& (Dungeon.hero.sprite == null || !Dungeon.hero.sprite.isMoving) && !Actor.processing()) {
-				Dungeon.hero.ready = true;
-				ready();
-			}
 		}
 
 		if (Dungeon.hero.ready && Dungeon.hero.paralysed == 0) {
