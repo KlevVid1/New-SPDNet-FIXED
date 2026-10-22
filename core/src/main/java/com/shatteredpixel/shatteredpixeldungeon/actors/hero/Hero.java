@@ -890,7 +890,7 @@ public class Hero extends Char {
 			if (resting) {
 				spendConstant( TIME_TO_REST );
 				next();
-			} else {
+			} else if (!ready) {
 				ready();
 			}
 
