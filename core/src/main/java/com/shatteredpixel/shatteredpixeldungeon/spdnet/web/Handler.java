@@ -694,24 +694,10 @@ public class Handler {
 		}
 		Game.runOnRenderThread(() -> {
 			Mob mob = Mob.findBySyncId(mobDamage.getSyncId(), mobDamage.getPos(), mobDamage.getMobClass());
-			if (mob == null && mobDamage.getMobClass() != null && Dungeon.level != null) {
-				try {
-					Class<?> cl = Class.forName(mobDamage.getMobClass());
-					mob = (Mob) Reflection.newInstance(cl);
-					if (mob != null) {
-						mob.syncId = mobDamage.getSyncId();
-						mob.pos = mobDamage.getPos();
-						mob.HT = Math.max(mob.HT, mobDamage.getCurrentHP());
-						mob.HP = mobDamage.getCurrentHP();
-						if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-							GameScene.add(mob);
-						} else {
-							Dungeon.level.mobs.add(mob);
-						}
-					}
-				} catch (Exception ignored) {}
-			}
 			if (mob != null && mob.isAlive()) {
+				if (!Actor.chars().contains(mob)) {
+					Actor.add(mob);
+				}
 				mob.HP = mobDamage.getCurrentHP();
 				if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
 					((Mimic) mob).stopHiding();
@@ -784,6 +770,9 @@ public class Handler {
 		Game.runOnRenderThread(() -> {
 			Mob mob = Mob.findBySyncId(mobMove.getSyncId(), mobMove.getFromPos(), mobMove.getMobClass());
 			if (mob != null && mob.isAlive()) {
+				if (!Actor.chars().contains(mob)) {
+					Actor.add(mob);
+				}
 				mob.isNetRemote = true;
 				try {
 					int from = mob.pos;
@@ -852,6 +841,20 @@ public class Handler {
 					}
 				}
 			}
+			// Проверяем: нет ли уже моба того же класса на этой позиции
+			// (например, при параллельном срабатывании спавна на хосте и клиенте)
+			if (mobSpawn.getPos() >= 0 && mobSpawn.getPos() < Dungeon.level.length()) {
+				for (Mob m : Dungeon.level.mobs) {
+					if (m != null && m.isAlive() && m.pos == mobSpawn.getPos()
+							&& (mobSpawn.getMobClass() == null || mobSpawn.getMobClass().equals(m.getClass().getName()))) {
+						m.syncId = mobSpawn.getSyncId();
+						m.HP = mobSpawn.getHp();
+						m.HT = mobSpawn.getHt();
+						Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, m.syncId % 100000);
+						return;
+					}
+				}
+			}
 			try {
 				Class<?> cl = Class.forName(mobSpawn.getMobClass());
 				Mob mob = (Mob) Reflection.newInstance(cl);
@@ -865,11 +868,7 @@ public class Handler {
 							|| mob instanceof com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GreatCrab) {
 						com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost.Quest.given = true;
 					}
-					if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-						GameScene.add(mob);
-					} else if (Dungeon.level != null) {
-						Dungeon.level.mobs.add(mob);
-					}
+					GameScene.add(mob);
 					Dungeon.level.maxMobSyncId = Math.max(Dungeon.level.maxMobSyncId, mob.syncId % 100000);
 				}
 			} catch (Exception e) {
@@ -893,7 +892,7 @@ public class Handler {
 			// 1. Удаляем с клиента мобов, которых больше нет на хосте (убиты или деспавнились)
 			List<Mob> toRemove = new ArrayList<>();
 			for (Mob m : Dungeon.level.mobs) {
-				if (m != null && !hostMobIds.contains(m.syncId)) {
+				if (m != null && m.syncId < 100000 && !hostMobIds.contains(m.syncId)) {
 					toRemove.add(m);
 				}
 			}
@@ -939,11 +938,7 @@ public class Handler {
 							mob.pos = s.getPos();
 							mob.HT = s.getHt();
 							mob.HP = s.getHp();
-							if (ShatteredPixelDungeon.scene() instanceof GameScene) {
-								GameScene.add(mob);
-							} else {
-								Dungeon.level.mobs.add(mob);
-							}
+							GameScene.add(mob);
 						}
 					} catch (Exception ignored) {}
 				}

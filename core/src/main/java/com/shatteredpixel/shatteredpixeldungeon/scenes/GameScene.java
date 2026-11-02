@@ -359,7 +359,12 @@ public class GameScene extends PixelScene {
 		}
 
 		for (Mob mob : Dungeon.level.mobs) {
-			addMobSprite( mob );
+			if (mob != null && mob.isAlive()) {
+				addMobSprite( mob );
+				if (!Actor.all().contains(mob)) {
+					Actor.add(mob);
+				}
+			}
 		}
 		
 		raisedTerrain = new RaisedTerrainTilemap();
@@ -1325,9 +1330,9 @@ public class GameScene extends PixelScene {
 		delay = (float)Math.ceil(Actor.now() + delay) - Actor.now();
 		if (scene != null) {
 			scene.addMobSprite(mob);
-			Actor.addDelayed(mob, delay);
-			mob.spendToWhole();
 		}
+		Actor.addDelayed(mob, delay);
+		mob.spendToWhole();
 	}
 	
 	public static void add( EmoIcon icon ) {

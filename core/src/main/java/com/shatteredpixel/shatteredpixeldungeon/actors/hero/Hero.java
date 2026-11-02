@@ -755,8 +755,15 @@ public class Hero extends Char {
 	}
 
 	public boolean canAttack(Char enemy){
-		if (enemy == null || pos == enemy.pos || !Actor.chars().contains(enemy)) {
+		if (enemy == null || pos == enemy.pos) {
 			return false;
+		}
+		if (!Actor.chars().contains(enemy)) {
+			if (enemy.isAlive() && Dungeon.level != null && Dungeon.level.mobs != null && Dungeon.level.mobs.contains(enemy)) {
+				Actor.add(enemy);
+			} else {
+				return false;
+			}
 		}
 
 		//can always attack adjacent enemies

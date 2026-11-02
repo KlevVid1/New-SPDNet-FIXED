@@ -401,18 +401,36 @@ public abstract class Actor implements Bundlable {
 	}
 	
 	public static synchronized Char findChar( int pos ) {
+		Char deadMatch = null;
 		for (Char ch : chars){
-			if (ch.pos == pos)
-				return ch;
-		}
-		if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level != null && com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.players != null) {
-			for (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero hero : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.players) {
-				if (hero != null && hero.pos == pos) {
-					return hero;
+			if (ch.pos == pos) {
+				if (ch.isAlive()) {
+					return ch;
+				} else if (deadMatch == null) {
+					deadMatch = ch;
 				}
 			}
 		}
-		return null;
+		if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level != null) {
+			if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.players != null) {
+				for (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero hero : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.players) {
+					if (hero != null && hero.pos == pos && hero.isAlive()) {
+						return hero;
+					}
+				}
+			}
+			if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs != null) {
+				for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs) {
+					if (m != null && m.pos == pos && m.isAlive()) {
+						if (!chars.contains(m)) {
+							add(m);
+						}
+						return m;
+					}
+				}
+			}
+		}
+		return deadMatch;
 	}
 
 	public static synchronized Actor findById( int id ) {

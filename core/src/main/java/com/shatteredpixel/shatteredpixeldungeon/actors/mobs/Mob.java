@@ -146,7 +146,7 @@ public abstract class Mob extends Char {
 		if (Dungeon.level == null || Dungeon.level.mobs == null) return null;
 		if (syncId > 0) {
 			for (Mob m : Dungeon.level.mobs) {
-				if (m.syncId == syncId) {
+				if (m != null && m.isAlive() && m.syncId == syncId) {
 					if (expectedClass == null || expectedClass.equals(m.getClass().getName())) {
 						return m;
 					}
@@ -155,16 +155,22 @@ public abstract class Mob extends Char {
 		}
 		if (fallbackPos >= 0 && fallbackPos < Dungeon.level.length()) {
 			for (Mob m : Dungeon.level.mobs) {
-				if (m.pos == fallbackPos) {
-					if (expectedClass == null || expectedClass.equals(m.getClass().getName())) {
-						return m;
+				if (m != null && m.isAlive() && m.pos == fallbackPos) {
+					// Не захватываем моба, если у него уже есть другой назначенный syncId
+					if (m.syncId == 0 || m.syncId == syncId) {
+						if (expectedClass == null || expectedClass.equals(m.getClass().getName())) {
+							if (syncId > 0 && m.syncId == 0) {
+								m.syncId = syncId;
+							}
+							return m;
+						}
 					}
 				}
 			}
 		}
 		if (syncId > 0) {
 			for (Mob m : Dungeon.level.mobs) {
-				if (m.syncId == syncId) return m;
+				if (m != null && m.isAlive() && m.syncId == syncId) return m;
 			}
 		}
 		return null;
@@ -1038,6 +1044,10 @@ public abstract class Mob extends Char {
 		super.destroy();
 		
 		Dungeon.level.mobs.remove( this );
+
+		if (sprite != null) {
+			sprite.killAndErase();
+		}
 
 		if (Dungeon.hero.buff(MindVision.class) != null){
 			Dungeon.observe();
