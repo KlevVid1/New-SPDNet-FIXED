@@ -43,7 +43,7 @@ This is a fan-made multiplayer modification and is not officially affiliated wit
 
 > [!IMPORTANT]
 > **Current Platform Status:** Currently, only the **Android** build is stable. Desktop may be unstable.
-> Please report any bugs in the Issues section
+> Please report any bugs in the Issues section.
 > The project isn't abandoned—I just don't have any ideas yet about what to fix or add to it.
 
 ## Compatibility & Branches
