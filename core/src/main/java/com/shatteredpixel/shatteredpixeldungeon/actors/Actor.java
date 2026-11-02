@@ -420,6 +420,7 @@ public abstract class Actor implements Bundlable {
 				}
 			}
 			if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs != null) {
+				// Эта хрень возвращает потерявшегося живого моба обратно в очередь акторов
 				for (com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob m : com.shatteredpixel.shatteredpixeldungeon.Dungeon.level.mobs) {
 					if (m != null && m.pos == pos && m.isAlive()) {
 						if (!chars.contains(m)) {

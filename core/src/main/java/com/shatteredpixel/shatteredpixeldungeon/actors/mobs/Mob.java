@@ -133,7 +133,7 @@ public abstract class Mob extends Char {
 	public int EXP = 1;
 	public int maxLvl = Hero.MAX_LEVEL-1;
 
-	// SPDNet Co-op: Сетевая синхронизация мобов
+	// Эта хрень нужна для сетевой синхронизации мобов
 	public int syncId = 0;
 	public boolean isNetRemote = false;
 	public boolean isNetRemoteAttack = false;
@@ -156,7 +156,7 @@ public abstract class Mob extends Char {
 		if (fallbackPos >= 0 && fallbackPos < Dungeon.level.length()) {
 			for (Mob m : Dungeon.level.mobs) {
 				if (m != null && m.isAlive() && m.pos == fallbackPos) {
-					// Не захватываем моба, если у него уже есть другой назначенный syncId
+					// Эта хрень не даёт увести чужого моба, если у него уже есть свой syncId
 					if (m.syncId == 0 || m.syncId == syncId) {
 						if (expectedClass == null || expectedClass.equals(m.getClass().getName())) {
 							if (syncId > 0 && m.syncId == 0) {
@@ -310,8 +310,7 @@ public abstract class Mob extends Char {
 		
 		super.act();
 
-		// SPDNet Co-op: Target-Driven Authority
-		// Если моб нацелен на удалённого напарника (NetHero), сначала проверяем, не атаковал ли его локальный герой
+		// Эта хрень передаёт управление мобом тому игроку, на которого моб сейчас агрится
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
 				&& enemy instanceof com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero) {
 			if (recentlyAttackedBy.contains(Dungeon.hero) || (fieldOfView != null && fieldOfView[Dungeon.hero.pos] && canAttack(Dungeon.hero))) {
@@ -527,7 +526,7 @@ public abstract class Mob extends Char {
 					enemies.add(Dungeon.hero);
 				}
 
-				// SPDNet Co-op: также проверяем всех игроков-напарников на этом этаже!
+				// Эта хрень находит живых напарников на этаже и делает их мишенями
 				if (Dungeon.level != null && Dungeon.level.players != null) {
 					for (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.actors.NetHero partner : Dungeon.level.players) {
 						if (partner != null && partner.isAlive() && fieldOfView[partner.pos] && partner.invisible <= 0) {

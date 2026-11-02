@@ -38,8 +38,7 @@ public class MobSpawner extends Actor {
 	@Override
 	protected boolean act() {
 
-		// SPDNet Co-op: Только хост управляет спавном новых респавнящихся мобов,
-		// чтобы предотвратить появление разных случайных мобов у хоста и клиента.
+		// Эта хрень разрешает спавнить респавнящихся мобов только хосту, чтобы не плодить рассинхрон
 		if (com.shatteredpixel.shatteredpixeldungeon.spdnet.web.Net.isConnected()
 				&& !com.shatteredpixel.shatteredpixeldungeon.spdnet.lan.LanServer.isRunning()) {
 			spend(Dungeon.level != null ? Dungeon.level.respawnCooldown() : TICK);

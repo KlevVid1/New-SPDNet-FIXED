@@ -189,14 +189,14 @@ public class Receiver {
 		Emitter.Listener onNoteNotify = args -> {
 			Handler.handleNoteNotify(JSON.parseObject(args[0].toString(), SServerMessage.class));
 		};
-		// SPDNet Co-op: Синхронизация предметов на полу
+		// Эта хрень принимает дроп и сбор предметов на полу
 		Emitter.Listener onItemDrop = args -> {
 			Handler.handleItemDrop(JSON.parseObject(args[0].toString(), SItemDrop.class));
 		};
 		Emitter.Listener onItemPickUp = args -> {
 			Handler.handleItemPickUp(JSON.parseObject(args[0].toString(), SItemPickUp.class));
 		};
-		// SPDNet Co-op: Синхронизация мобов и боссов
+		// Эта хрень принимает все сетевые действия мобов и боссов
 		Emitter.Listener onMobDamage = args -> {
 			Handler.handleMobDamage(JSON.parseObject(args[0].toString(), SMobDamage.class));
 		};

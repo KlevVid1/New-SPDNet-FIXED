@@ -208,7 +208,7 @@ public class LanServer {
 			startLatch.await(1000, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException ignored) {}
 
-		// Запуск периодического Engine.IO ping для предотвращения ping-timeout на клиенте
+		// Эта хрень пингует клиентов, чтобы сокет не отваливался
 		pingScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
 			Thread t = new Thread(r, "LanServer-Heartbeat");
 			t.setDaemon(true);
@@ -286,7 +286,7 @@ public class LanServer {
 		LanSession session = sessions.remove(conn);
 		if (session != null) {
 			nameToConn.remove(session.name, conn);
-			// Оповестить остальных об уходе игрока
+			// Эта хрень оповещает остальных об уходе игрока
 			broadcast(Events.EXIT.getName(), new SExit(session.name, ""), conn);
 			NLog.i("LanServer: player disconnected: " + session.name);
 		}
@@ -324,15 +324,12 @@ public class LanServer {
 			}
 
 			if (session != null) {
-				// 1. Отправляем INIT с сидом и именем
 				SInit sInit = new SInit(session.name, "Локальный сервер SPDNet", seeds, new HashSet<>());
 				emit(conn, Events.INIT.getName(), sInit);
 
-				// 2. Отправляем PLAYER_LIST
 				SPlayerList sPlayerList = new SPlayerList(collectAllPlayers());
 				emit(conn, Events.PLAYER_LIST.getName(), sPlayerList);
 
-				// 3. Рассылаем JOIN остальным игрокам
 				SJoin sJoin = new SJoin(session.name, "PLAYER", "");
 				broadcast(Events.JOIN.getName(), sJoin, conn);
 			}
@@ -681,6 +678,7 @@ public class LanServer {
 		}
 	}
 
+	// Эта хрень синхронизирует мобов этажа с хоста на подключившихся клиентов
 	public static void syncMobsForFloor(int depth) {
 		if (com.shatteredpixel.shatteredpixeldungeon.Dungeon.level != null
 				&& com.shatteredpixel.shatteredpixeldungeon.Dungeon.floorId() == depth

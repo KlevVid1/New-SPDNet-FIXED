@@ -542,7 +542,7 @@ public class Handler {
 		NetHero.syncWithCurrentLevel();
 	}
 
-	// SPDNet Co-op: Синхронизация предметов на полу
+	// Эта хрень синхронизирует предметы на полу
 	public static void handleItemDrop(SItemDrop itemDrop) {
 		if (itemDrop == null || itemDrop.getName() == null || itemDrop.getName().equals(Net.name)) {
 			return;
@@ -590,7 +590,7 @@ public class Handler {
 		});
 	}
 
-	// SPDNet Co-op: Синхронизация местности (трава, двери, баррикады)
+	// Эта хрень синхронизирует местность (траву, двери, баррикады)
 	public static void handleTerrainChange(STerrainChange terrainChange) {
 		if (terrainChange == null || terrainChange.getName() == null || terrainChange.getName().equals(Net.name)) {
 			return;
@@ -610,8 +610,7 @@ public class Handler {
 					return;
 				}
 
-				// Защита от повреждения генерации карты:
-				// 1. Двери: могут меняться только на клетках, которые уже являются дверями
+				// Эта хрень защищает карту от кривых сетевых пакетов (не даёт ломать стены или спавнить левые двери)
 				if (newTerrain == Terrain.DOOR || newTerrain == Terrain.OPEN_DOOR) {
 					boolean isDoorSlot = (oldTerrain == Terrain.DOOR || oldTerrain == Terrain.OPEN_DOOR ||
 							oldTerrain == Terrain.LOCKED_DOOR || oldTerrain == Terrain.HERO_LKD_DR ||
@@ -621,13 +620,11 @@ public class Handler {
 					}
 				}
 
-				// 2. Стены и пропасти: удаленный пакет не должен ломать стены или засыпать бездну
 				if ((oldTerrain == Terrain.WALL || oldTerrain == Terrain.WALL_DECO || oldTerrain == Terrain.CHASM) &&
 						(newTerrain != Terrain.WALL && newTerrain != Terrain.WALL_DECO && newTerrain != Terrain.CHASM)) {
 					return;
 				}
 
-				// 3. Ловушки: не спавнить ловушки на пустых клетках
 				if (newTerrain == Terrain.TRAP || newTerrain == Terrain.INACTIVE_TRAP) {
 					boolean isTrapSlot = (oldTerrain == Terrain.SECRET_TRAP || oldTerrain == Terrain.TRAP || oldTerrain == Terrain.INACTIVE_TRAP);
 					if (!isTrapSlot) {
@@ -635,7 +632,6 @@ public class Handler {
 					}
 				}
 
-				// 4. Баррикады: баррикада не должна возникать на пустом месте
 				if (newTerrain == Terrain.BARRICADE && oldTerrain != Terrain.BARRICADE) {
 					return;
 				}
@@ -660,7 +656,7 @@ public class Handler {
 		});
 	}
 
-	// SPDNet Co-op: Синхронизация открытия сундуков
+	// Эта хрень синхронизирует открытие сундуков
 	public static void handleChestOpen(SChestOpen chestOpen) {
 		if (chestOpen == null || chestOpen.getName() == null || chestOpen.getName().equals(Net.name)) {
 			return;
@@ -684,7 +680,7 @@ public class Handler {
 		});
 	}
 
-	// SPDNet Co-op: Синхронизация мобов и боссов
+	// Эта хрень применяет сетевой урон по мобам
 	public static void handleMobDamage(SMobDamage mobDamage) {
 		if (mobDamage == null || mobDamage.getName() == null || mobDamage.getName().equals(Net.name)) {
 			return;
@@ -702,7 +698,7 @@ public class Handler {
 				if (mob instanceof Mimic && ((Mimic) mob).alignment == Char.Alignment.NEUTRAL) {
 					((Mimic) mob).stopHiding();
 				}
-				// Выравнивание позиции при рассинхронизации клеток
+				// Выравниваем позицию при рассинхроне клеток
 				if (mob.pos != mobDamage.getPos() && mobDamage.getPos() >= 0 && mobDamage.getPos() < Dungeon.level.length()) {
 					mob.pos = mobDamage.getPos();
 					if (mob.sprite != null && ShatteredPixelDungeon.scene() instanceof GameScene) {
@@ -798,7 +794,7 @@ public class Handler {
 							mob.sprite.place(mob.pos);
 						}
 					}
-					// Устанавливаем цель моба на игрока, вызвавшего перемещение
+					// Переключаем цель моба на игрока, вызвавшего перемещение
 					NetHero sender = NetHero.getPlayerFromDungeon(mobMove.getName());
 					if (sender != null) {
 						mob.assignRemoteTarget(sender);
@@ -841,8 +837,7 @@ public class Handler {
 					}
 				}
 			}
-			// Проверяем: нет ли уже моба того же класса на этой позиции
-			// (например, при параллельном срабатывании спавна на хосте и клиенте)
+			// Эта хрень проверяет, нет ли уже такого моба на клетке, чтобы не плодить дубликаты
 			if (mobSpawn.getPos() >= 0 && mobSpawn.getPos() < Dungeon.level.length()) {
 				for (Mob m : Dungeon.level.mobs) {
 					if (m != null && m.isAlive() && m.pos == mobSpawn.getPos()
@@ -877,6 +872,7 @@ public class Handler {
 		});
 	}
 
+	// Эта хрень синхронизирует мобов этажа с хоста
 	public static void handleMobSync(SMobSync mobSync) {
 		if (mobSync == null || mobSync.getDepth() != Dungeon.floorId() || Dungeon.level == null || mobSync.getMobs() == null) {
 			return;
@@ -889,7 +885,7 @@ public class Handler {
 				}
 			}
 
-			// 1. Удаляем с клиента мобов, которых больше нет на хосте (убиты или деспавнились)
+			// Сносим мобов, которых на хосте уже прикончили
 			List<Mob> toRemove = new ArrayList<>();
 			for (Mob m : Dungeon.level.mobs) {
 				if (m != null && m.syncId < 100000 && !hostMobIds.contains(m.syncId)) {
@@ -902,7 +898,7 @@ public class Handler {
 				Actor.remove(m);
 			}
 
-			// 2. Обновляем существующие и спавним отсутствующие мобы
+			// Обновляем живых и спавним недостающих
 			for (SMobSpawn s : mobSync.getMobs()) {
 				if (s == null) continue;
 				Mob existing = null;
@@ -947,7 +943,7 @@ public class Handler {
 		});
 	}
 
-	// SPDNet Co-op: Синхронизация бросания зелий и сплешей
+	// Эта хрень синхронизирует бросание зелий и сплешей
 	public static void handlePotionThrow(SPotionThrow msg) {
 		if (msg == null || msg.getName() == null || msg.getName().equals(Net.name)) {
 			return;
@@ -1062,7 +1058,7 @@ public class Handler {
 		}
 	}
 
-	// SPDNet Co-op: Синхронизация тушения вечного огня в комнатах с загадками
+	// Эта хрень тушит вечный огонь в комнатах с загадками
 	public static void handleEternalFireClear(SEternalFireClear msg) {
 		if (msg == null || (msg.getName() != null && msg.getName().equals(Net.name))) {
 			return;

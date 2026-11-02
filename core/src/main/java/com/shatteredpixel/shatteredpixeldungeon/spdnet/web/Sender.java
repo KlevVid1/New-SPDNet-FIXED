@@ -174,7 +174,7 @@ public class Sender {
 		emit(Actions.DOCUMENT_UPDATE.getName(), JSON.toJSONString(documentUpdate));
 	}
 
-	// SPDNet Co-op: Синхронизация предметов на полу
+	// Эта хрень рассылает дроп и сбор предметов на полу
 	public static void sendItemDrop(int depth, int pos, Item item) {
 		if (item == null) return;
 		emit(Actions.ITEM_DROP.getName(), JSON.toJSONString(new CItemDrop(depth, pos, item)));
@@ -184,7 +184,7 @@ public class Sender {
 		emit(Actions.ITEM_PICKUP.getName(), JSON.toJSONString(new CItemPickUp(depth, pos)));
 	}
 
-	// SPDNet Co-op: Синхронизация мобов и боссов
+	// Эта хрень отправляет пакеты по мобам и боссам
 	public static void sendMobDamage(int depth, int syncId, int pos, int damage, int currentHP, String attackerName, String mobClass) {
 		emit(Actions.MOB_DAMAGE.getName(), JSON.toJSONString(new CMobDamage(depth, syncId, pos, damage, currentHP, attackerName, mobClass)));
 	}
