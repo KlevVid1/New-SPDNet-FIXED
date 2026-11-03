@@ -147,6 +147,22 @@ public class DesktopLauncher {
 		}
 		
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
+
+		boolean useGLES = Boolean.getBoolean("spdnet.gles") ||
+				(SharedLibraryLoader.os == Os.Linux && (SharedLibraryLoader.isARM ||
+						System.getProperty("os.arch", "").contains("aarch64") ||
+						System.getProperty("os.arch", "").contains("arm")));
+		if (useGLES) {
+			System.out.println("Enabling native OpenGL ES emulation (ANGLE_GLES20 / EGL)...");
+			org.lwjgl.system.Configuration.OPENGL_EXPLICIT_INIT.set(true);
+			org.lwjgl.system.Configuration.EGL_LIBRARY_NAME.set("libEGL.so.1");
+			org.lwjgl.system.Configuration.OPENGLES_LIBRARY_NAME.set("libGLESv2.so.2");
+			try {
+				Class<?> glCls = Class.forName("org.lwjgl.opengl.GL");
+				glCls.getMethod("destroy").invoke(null);
+			} catch (Throwable ignored) {}
+			config.setOpenGLEmulation(Lwjgl3ApplicationConfiguration.GLEmulation.ANGLE_GLES20, 2, 0);
+		}
 		
 		config.setTitle( title );
 
@@ -202,6 +218,20 @@ public class DesktopLauncher {
 		config.setWindowIcon("icons/icon_16.png", "icons/icon_32.png", "icons/icon_48.png",
 				"icons/icon_64.png", "icons/icon_128.png", "icons/icon_256.png");
 
-		new Lwjgl3Application(new ShatteredPixelDungeon(new DesktopPlatformSupport()), config);
+		final boolean isGLES = useGLES;
+		new Lwjgl3Application(new ShatteredPixelDungeon(new DesktopPlatformSupport()), config) {
+			@Override
+			public com.badlogic.gdx.backends.lwjgl3.Lwjgl3Input createInput (com.badlogic.gdx.backends.lwjgl3.Lwjgl3Window window) {
+				boolean onWayland = false;
+				try {
+					onWayland = org.lwjgl.glfw.GLFWNativeWayland.glfwGetWaylandDisplay() != 0;
+				} catch (Throwable ignored) {}
+				if (isGLES || onWayland) {
+					System.out.println("Using WaylandLwjgl3Input for touch input support...");
+					return new com.badlogic.gdx.backends.lwjgl3.WaylandLwjgl3Input(window);
+				}
+				return super.createInput(window);
+			}
+		};
 	}
 }

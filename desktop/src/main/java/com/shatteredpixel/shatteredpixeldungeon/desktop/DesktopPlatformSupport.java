@@ -62,6 +62,9 @@ public class DesktopPlatformSupport extends PlatformSupport {
 
 	@Override
 	public void updateSystemUI() {
+		if (Boolean.getBoolean("spdnet.gles")) {
+			return;
+		}
 		Gdx.app.postRunnable( new Runnable() {
 			@Override
 			public void run () {

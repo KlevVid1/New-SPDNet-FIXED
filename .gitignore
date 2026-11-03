@@ -3,6 +3,7 @@
 *.AppImage
 *.exe
 *-windows-x64.zip
+*.click
 # Files for the Dalvik VM
 *.dex
 

@@ -1,0 +1,10 @@
+clickable_minimum_required: "8.0"
+
+builder: custom
+build:
+  - "cp -a ${ROOT}/build/clickable/stage/. ${INSTALL_DIR}/"
+
+framework: ubuntu-sdk-20.04
+
+scripts:
+  build: "./scripts/build-click.sh"
