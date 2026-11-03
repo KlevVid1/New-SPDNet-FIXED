@@ -13,6 +13,7 @@ This project adds multiplayer functionality to the classic Shattered Pixel Dunge
 ## 📥 Downloads
 
 [![Latest Release](https://img.shields.io/github/v/release/KlevVid1/New-SPDNet-FIXED?style=for-the-badge&logo=github&logoColor=white&color=success&label=Download%20Latest%20APK)](https://github.com/KlevVid1/New-SPDNet-FIXED/releases/latest)
+[![OpenStore](https://open-store.io/badges/en_US.png)](https://open-store.io/app/ru.klevvid.spdnet/)
 
 > 💡 **Tip:** Pre-built `.apk` files for Android can be found in the **Assets** dropdown of the latest release.  
 > Looking for other builds? Check out the [All Releases](https://github.com/KlevVid1/New-SPDNet-FIXED/releases) page.
